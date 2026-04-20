@@ -1536,3 +1536,162 @@
 })();
 </script>
 <!-- ===================== END PART 1.5.5/15 ===================== -->
+<!-- ===================== PART 1.6/15 — MOBILE BALANCE (SHOT COOLDOWN + FAST KICK) ===================== -->
+<script id="P1_6_MOBILE_BALANCE">
+(() => {
+  // Только мобилка
+  const isTouch = matchMedia("(pointer: coarse)").matches || ("ontouchstart" in window);
+  if(!isTouch) return;
+
+  const btnShotOld = document.getElementById("btnTShot");
+  const btnPassOld = document.getElementById("btnTPass");
+  const btnKickOld = document.getElementById("btnTKick");
+
+  // Если кнопок нет — выходим
+  if(!btnShotOld && !btnKickOld) return;
+
+  // Настройки баланса
+  const SHOT_COOLDOWN_MS = 520; // <-- можешь изменить: 450..650 (0.45–0.65 сек)
+  const PASS_COOLDOWN_MS = 0;   // <-- если захочешь ограничить пас, поставь например 250
+
+  // Вибро/фидбек
+  function vib(ms=12){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch{} }
+
+  // --------- 1) УДАР: запрет спама ----------
+  // Делаем замену обработчиков самым надежным способом: клонируем кнопки
+  function replaceBtn(oldBtn){
+    if(!oldBtn) return null;
+    const n = oldBtn.cloneNode(true);
+    oldBtn.parentNode.replaceChild(n, oldBtn);
+    return n;
+  }
+
+  const btnShot = replaceBtn(btnShotOld);
+  const btnPass = replaceBtn(btnPassOld);
+  const btnKick = replaceBtn(btnKickOld);
+
+  let nextShotAllowed = 0;
+  let nextPassAllowed = 0;
+
+  // Хелпер: безопасно вызвать touchCharge / kick
+  function safeTouchCharge(type, down){
+    if(typeof touchCharge === "function"){
+      touchCharge(type, down);
+      return true;
+    }
+    return false;
+  }
+  function safeKick(power){
+    if(typeof kick === "function"){
+      kick(power);
+      return true;
+    }
+    return false;
+  }
+
+  // УДАР (SHOT): начинаем заряд только если кулдаун прошел
+  if(btnShot){
+    btnShot.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if(typeof ensureAudio==="function") ensureAudio();
+
+      const now = performance.now();
+      if(now < nextShotAllowed){
+        // запретить спам
+        vib(10);
+        // маленький визуальный фидбек
+        btnShot.style.filter = "brightness(1.0)";
+        btnShot.style.outline = "3px solid rgba(255,45,160,.40)";
+        setTimeout(()=>btnShot.style.outline="", 120);
+        return;
+      }
+
+      // можно начинать заряд
+      btnShot.classList.add("on");
+      safeTouchCharge("shot", true);
+    }, {passive:false, capture:true});
+
+    btnShot.addEventListener("pointerup", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const now = performance.now();
+
+      // Завершаем заряд (сработает удар)
+      btnShot.classList.remove("on");
+      safeTouchCharge("shot", false);
+
+      // ставим кулдаун после удара
+      nextShotAllowed = now + SHOT_COOLDOWN_MS;
+    }, {passive:false, capture:true});
+
+    btnShot.addEventListener("pointercancel", (e) => {
+      e.preventDefault();
+      btnShot.classList.remove("on");
+      safeTouchCharge("shot", false);
+    }, {passive:false, capture:true});
+  }
+
+  // ПАС (PASS): по желанию можно оставить без кулдауна или чуть ограничить
+  if(btnPass){
+    btnPass.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if(typeof ensureAudio==="function") ensureAudio();
+
+      const now = performance.now();
+      if(PASS_COOLDOWN_MS > 0 && now < nextPassAllowed){
+        vib(8);
+        btnPass.style.outline = "3px solid rgba(33,215,255,.35)";
+        setTimeout(()=>btnPass.style.outline="", 120);
+        return;
+      }
+
+      btnPass.classList.add("on");
+      safeTouchCharge("pass", true);
+    }, {passive:false, capture:true});
+
+    btnPass.addEventListener("pointerup", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const now = performance.now();
+
+      btnPass.classList.remove("on");
+      safeTouchCharge("pass", false);
+
+      if(PASS_COOLDOWN_MS > 0) nextPassAllowed = now + PASS_COOLDOWN_MS;
+    }, {passive:false, capture:true});
+
+    btnPass.addEventListener("pointercancel", (e) => {
+      e.preventDefault();
+      btnPass.classList.remove("on");
+      safeTouchCharge("pass", false);
+    }, {passive:false, capture:true});
+  }
+
+  // --------- 2) ПИНОК: максимально спамный ----------
+  // Делам KICK на pointerdown (без задержки клика), без кулдауна (или микрокулдаун 60мс от дребезга)
+  let lastKickAt = 0;
+  const KICK_MIN_GAP_MS = 60; // микроскопическая защита от двойного срабатывания
+
+  if(btnKick){
+    // убираем возможные старые обработчики — кнопка уже заменена cloneNode выше
+    btnKick.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if(typeof ensureAudio==="function") ensureAudio();
+
+      const now = performance.now();
+      if(now - lastKickAt < KICK_MIN_GAP_MS) return;
+      lastKickAt = now;
+
+      // лёгкий пинок (как Space)
+      const power = (typeof PHYS === "object" && PHYS.lightKick) ? PHYS.lightKick : 160;
+      const ok = safeKick(power);
+      if(ok) vib(7);
+    }, {passive:false, capture:true});
+  }
+
+})();
+</script>
+<!-- ===================== END PART 1.6/15 ===================== -->
