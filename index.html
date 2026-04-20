@@ -1,1193 +1,81 @@
-<!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Soccer Chips: Legends — Part 1 (Green + Sprint Toggle)</title>
-
-  <style>
-    :root{
-      --ink:#15131a;
-
-      --orange:#ff7a00;
-      --orange2:#ffb000;
-      --violet:#7a35ff;
-      --violet2:#b144ff;
-      --pink:#ff2da0;
-      --cyan:#21d7ff;
-      --lime:#3cff8f;
-
-      --glass: rgba(255,255,255,.78);
-      --glass2: rgba(255,255,255,.60);
-      --stroke: rgba(21,19,26,.12);
-      --shadow: 0 26px 70px rgba(21,19,26,.18);
-      --shadow2: 0 14px 36px rgba(21,19,26,.14);
-
-      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", sans-serif;
-      --mono: ui-monospace, Menlo, Consolas, "Liberation Mono", monospace;
-    }
-
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; overflow:hidden; font-family:var(--font); color:var(--ink);
-      /* Зелёная трава как база */
-      background:
-        radial-gradient(1200px 900px at 20% 20%, rgba(60,255,143,.22), transparent 60%),
-        radial-gradient(1200px 900px at 80% 25%, rgba(33,215,255,.14), transparent 62%),
-        linear-gradient(135deg, #d7ffd9, #bff3c8 55%, #b6e9c0);
-    }
-    body::before{
-      content:"";
-      position:fixed; inset:0; pointer-events:none;
-      background:
-        repeating-linear-gradient(135deg,
-          rgba(21,19,26,.05) 0px,
-          rgba(21,19,26,.05) 1px,
-          transparent 1px,
-          transparent 14px);
-      opacity:.18;
-      mix-blend-mode:multiply;
-    }
-
-    .screen{position:fixed; inset:0; display:none}
-    .screen.on{display:block}
-
-    /* ========== LOADER ========== */
-    #screenLoader{z-index:9999}
-    #screenLoader.hide{
-      opacity:0; transform:scale(1.02); pointer-events:none;
-      transition: opacity .55s ease, transform .55s ease;
-    }
-    .loaderFull{position:absolute; inset:0; display:grid; place-items:center; overflow:hidden;}
-    .loaderBg{
-      position:absolute; inset:-180px;
-      background: conic-gradient(from 180deg,
-        rgba(255,122,0,.60),
-        rgba(255,45,160,.48),
-        rgba(122,53,255,.55),
-        rgba(33,215,255,.40),
-        rgba(255,176,0,.60),
-        rgba(255,122,0,.60));
-      filter: blur(34px);
-      opacity:.95;
-      animation: spin 7.8s linear infinite;
-    }
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .blob{position:absolute; border-radius:999px; filter: blur(16px); opacity:.55; mix-blend-mode:multiply; animation: blob 6s ease-in-out infinite;}
-    .b1{ width:520px; height:420px; left:-140px; top:120px; background:rgba(255,122,0,.80); animation-duration:7.2s; }
-    .b2{ width:560px; height:460px; right:-190px; top:80px; background:rgba(122,53,255,.78); animation-duration:8.1s; }
-    .b3{ width:620px; height:520px; left:20%; bottom:-260px; background:rgba(255,45,160,.68); animation-duration:8.6s; }
-    .b4{ width:420px; height:360px; right:18%; bottom:-180px; background:rgba(33,215,255,.62); animation-duration:7.9s; }
-    @keyframes blob{
-      0%{ transform: translate(0,0) scale(1); }
-      50%{ transform: translate(22px,-18px) scale(1.05); }
-      100%{ transform: translate(0,0) scale(1); }
-    }
-
-    .loaderCenter{
-      position:relative;
-      width:min(980px, calc(100% - 28px));
-      border-radius:36px;
-      padding:26px 22px 18px;
-      background: var(--glass);
-      border:1px solid var(--stroke);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-      overflow:hidden;
-    }
-    .loaderCenter::before{
-      content:"";
-      position:absolute; inset:-2px;
-      background:
-        radial-gradient(900px 260px at 18% 18%, rgba(255,122,0,.25), transparent 60%),
-        radial-gradient(900px 260px at 82% 18%, rgba(122,53,255,.23), transparent 60%),
-        radial-gradient(900px 320px at 55% 95%, rgba(255,45,160,.18), transparent 65%);
-      opacity:.95; pointer-events:none;
-    }
-    .lcInner{position:relative; display:grid; gap:16px; text-align:center}
-    .logoRow{display:flex; align-items:center; justify-content:center; gap:16px; flex-wrap:wrap;}
-    .bigLogo{
-      font-weight:1200; letter-spacing:1.2px; text-transform:uppercase;
-      font-size:48px; line-height:1.0;
-      background: linear-gradient(90deg, var(--orange), var(--pink), var(--violet));
-      -webkit-background-clip:text; background-clip:text; color:transparent;
-    }
-    .miniTag{font-size:12px; font-weight:1100; letter-spacing:.6px; color:rgba(21,19,26,.65);}
-
-    .ringWrap{display:grid; grid-template-columns:120px 1fr; gap:18px; align-items:center; width:min(720px, 100%); margin:0 auto;}
-    @media (max-width:640px){ .ringWrap{grid-template-columns:1fr; justify-items:center} }
-    .ring{
-      width:120px;height:120px;border-radius:50%;
-      background: conic-gradient(from 270deg, rgba(255,122,0,.95) var(--p), rgba(21,19,26,.10) 0);
-      display:grid; place-items:center;
-      box-shadow: 0 16px 40px rgba(21,19,26,.12);
-      border:1px solid rgba(21,19,26,.10);
-    }
-    .ringInner{
-      width:92px;height:92px;border-radius:50%;
-      background: rgba(255,255,255,.75);
-      border:1px solid rgba(21,19,26,.10);
-      display:grid; place-items:center;
-    }
-    .pct{font-family:var(--mono); font-size:14px; color:rgba(21,19,26,.70); font-weight:1100;}
-    .loadText{
-      text-align:left; padding:12px 12px; border-radius:18px;
-      background: rgba(255,255,255,.55);
-      border:1px solid rgba(21,19,26,.10);
-      box-shadow: var(--shadow2);
-    }
-    .loadText .line1{font-weight:1200; font-size:14px}
-    .loadText .line2{margin-top:6px; font-size:13px; color:rgba(21,19,26,.70); line-height:1.35}
-    .loadFoot{display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; font-size:12px; color:rgba(21,19,26,.60)}
-
-    /* ========== GAME ========== */
-    #gameCanvas{position:fixed; inset:0; width:100vw; height:100vh; display:block; outline:none; touch-action:none;}
-
-    /* top pill */
-    .topPill{
-      position:absolute; left:50%; top:12px; transform:translateX(-50%);
-      padding:10px 14px; border-radius:999px;
-      background: var(--glass2);
-      border:1px solid var(--stroke);
-      box-shadow: var(--shadow2);
-      backdrop-filter: blur(12px);
-      display:flex; align-items:center; gap:10px;
-      pointer-events:none;
-      font-size:12px;
-    }
-    .dot{width:10px;height:10px;border-radius:50%; background: rgba(255,122,0,.92); box-shadow:0 0 0 5px rgba(255,122,0,.18)}
-    .topPill b{font-weight:1200}
-    #hudStep{font-family:var(--mono); opacity:.7}
-
-    /* stamina */
-    .stamina{
-      position:absolute; left:16px; top:12px;
-      width:240px;
-      padding:10px 12px;
-      border-radius:18px;
-      background: var(--glass2);
-      border:1px solid var(--stroke);
-      box-shadow: var(--shadow2);
-      backdrop-filter: blur(12px);
-      pointer-events:none;
-    }
-    .stRow{display:flex; justify-content:space-between; align-items:center; font-size:12px; color:rgba(21,19,26,.80)}
-    .stRow b{font-weight:1200}
-    .stRow .mode{font-family:var(--mono); font-size:11px; opacity:.8}
-    .stBar{margin-top:8px; height:10px; border-radius:999px; overflow:hidden; background: rgba(21,19,26,.08); border:1px solid rgba(21,19,26,.10)}
-    .stBar>i{display:block; height:100%; width:100%; background: linear-gradient(90deg, var(--lime), var(--orange2), var(--pink)); transition: width .08s linear}
-
-    /* coach panel */
-    .coach{
-      position:absolute; left:16px; bottom:16px;
-      width:min(740px, calc(100% - 32px));
-      border-radius:24px;
-      background: var(--glass2);
-      border:1px solid var(--stroke);
-      box-shadow: var(--shadow2);
-      backdrop-filter: blur(14px);
-      overflow:hidden;
-      pointer-events:auto;
-    }
-    .coachHd{
-      padding:10px 12px;
-      border-bottom:1px solid rgba(21,19,26,.08);
-      display:flex; justify-content:space-between; align-items:center; gap:10px;
-      background: linear-gradient(to bottom, rgba(255,255,255,.35), transparent);
-    }
-    .coachLeft{display:flex; align-items:center; gap:10px}
-    .coachAvatar{
-      width:42px;height:42px;border-radius:16px;
-      background: rgba(21,19,26,.06);
-      border:1px solid rgba(21,19,26,.10);
-      overflow:hidden;
-      flex:0 0 42px;
-    }
-    .coachAvatar img{width:100%;height:100%;display:block}
-    .coachMeta{display:flex;flex-direction:column;gap:2px}
-    .coachMeta .name{font-weight:1200;font-size:12.8px}
-    .coachMeta .role{font-size:12px;color:rgba(21,19,26,.62)}
-    .coachProg{font-size:12px;color:rgba(21,19,26,.62); font-family:var(--mono)}
-    .coachBd{padding:10px 12px 12px; display:flex; flex-direction:column; gap:10px}
-    .textBox{
-      height:98px; overflow:auto;
-      border-radius:16px;
-      background: rgba(255,255,255,.55);
-      border:1px solid rgba(21,19,26,.10);
-      padding:10px 10px;
-      color:rgba(21,19,26,.92);
-      font-size:13px;
-      line-height:1.35;
-      white-space:pre-wrap;
-    }
-    .btnRow{display:flex; gap:10px; flex-wrap:wrap}
-    .btn{
-      border:none; cursor:pointer;
-      padding:10px 12px;
-      border-radius:16px;
-      background: rgba(255,255,255,.72);
-      border:1px solid rgba(21,19,26,.10);
-      box-shadow: 0 10px 0 rgba(21,19,26,.10);
-      font-weight:1200;
-      color:rgba(21,19,26,.90);
-      transition: transform .08s ease, filter .15s ease;
-    }
-    .btn:hover{filter:brightness(1.02)}
-    .btn:active{transform:translateY(8px); box-shadow:0 4px 0 rgba(21,19,26,.10)}
-    .btn.secondary{background: rgba(255,255,255,.55)}
-    .btn.danger{background: rgba(255,45,160,.16); border-color: rgba(255,45,160,.22)}
-
-    /* Hints panel */
-    .hints{
-      position:absolute; right:16px; top:60px;
-      width:220px;
-      border-radius:18px;
-      background: var(--glass2);
-      border:1px solid var(--stroke);
-      box-shadow: var(--shadow2);
-      backdrop-filter: blur(14px);
-      overflow:hidden;
-      pointer-events:auto;
-    }
-    .hHd{padding:10px 10px; font-weight:1200; font-size:12px; display:flex; justify-content:space-between; align-items:center; gap:8px; border-bottom:1px solid rgba(21,19,26,.08)}
-    .hBd{padding:10px 10px; display:flex; flex-direction:column; gap:8px;}
-    .hRow{
-      display:flex; justify-content:space-between; align-items:center; gap:8px;
-      padding:8px 8px;
-      border-radius:14px;
-      background: rgba(255,255,255,.55);
-      border:1px solid rgba(21,19,26,.10);
-      font-size:12px;
-      color: rgba(21,19,26,.76);
-    }
-    .kbd{
-      font-family: var(--mono);
-      font-size:11px;
-      background: rgba(21,19,26,.08);
-      border:1px solid rgba(21,19,26,.10);
-      padding:3px 6px;
-      border-radius:10px;
-      color: rgba(21,19,26,.75);
-      min-width:44px;
-      text-align:center;
-    }
-    .miniBtn{
-      border:none; cursor:pointer;
-      padding:6px 10px; border-radius:12px;
-      background: rgba(255,255,255,.60);
-      border:1px solid rgba(21,19,26,.10);
-      font-weight:1100;
-      color: rgba(21,19,26,.75);
-    }
-
-    /* Power bar */
-    .power{
-      position:fixed; left:50%; bottom:14px; transform:translateX(-50%);
-      width:min(520px, calc(100% - 24px));
-      padding:10px 12px;
-      border-radius:18px;
-      background: rgba(255,255,255,.78);
-      border:1px solid rgba(21,19,26,.10);
-      box-shadow: var(--shadow2);
-      backdrop-filter: blur(10px);
-      display:none;
-      pointer-events:none;
-      z-index:5000;
-    }
-    .power.on{display:block}
-    .power .row{display:flex; justify-content:space-between; font-size:12px; color:rgba(21,19,26,.72)}
-    .pbar{margin-top:8px;height:12px;border-radius:999px;overflow:hidden;background: rgba(21,19,26,.08); border:1px solid rgba(21,19,26,.10)}
-    .pbar>i{display:block;height:100%;width:0%; background: linear-gradient(90deg, var(--cyan), var(--orange), var(--violet)); transition:width .06s linear}
-
-    /* Touch controls */
-    .touchUI{position:fixed; inset:0; z-index:6000; pointer-events:none}
-    .joyBase, .aimBase{
-      position:absolute; width:150px;height:150px; border-radius:50%;
-      background: rgba(255,255,255,.55);
-      border:1px solid rgba(21,19,26,.10);
-      box-shadow: var(--shadow2);
-      backdrop-filter: blur(10px);
-      pointer-events:auto;
-      touch-action:none;
-    }
-    .joyBase{left:18px; bottom:18px}
-    .aimBase{right:18px; bottom:18px}
-    .joyKnob, .aimKnob{
-      position:absolute; left:50%; top:50%;
-      width:58px; height:58px; border-radius:50%;
-      transform:translate(-50%,-50%);
-      background: rgba(255,255,255,.85);
-      border:1px solid rgba(21,19,26,.12);
-      box-shadow: 0 10px 22px rgba(21,19,26,.16);
-    }
-    .touchLabel{
-      position:absolute; top:-24px; left:50%; transform:translateX(-50%);
-      font-size:11px; font-weight:1100; color:rgba(21,19,26,.65);
-      background: rgba(255,255,255,.70);
-      padding:4px 8px; border-radius:999px;
-      border:1px solid rgba(21,19,26,.10);
-    }
-    .touchBtns{
-      position:absolute; right:18px; top:18px;
-      display:flex; gap:10px; flex-direction:column;
-      pointer-events:auto;
-    }
-    .tbtn{
-      border:none; cursor:pointer;
-      width:120px;
-      padding:10px 12px;
-      border-radius:18px;
-      background: rgba(255,255,255,.72);
-      border:1px solid rgba(21,19,26,.10);
-      box-shadow: 0 10px 0 rgba(21,19,26,.10);
-      font-weight:1200;
-      color: rgba(21,19,26,.88);
-      touch-action:none;
-    }
-    .tbtn:active{transform:translateY(8px); box-shadow:0 4px 0 rgba(21,19,26,.10)}
-    .tbtn.on{background: rgba(60,255,143,.25); border-color: rgba(60,255,143,.35)}
-    .touchOff .touchUI{display:none}
-  </style>
-</head>
-
-<body>
-  <!-- LOADER -->
-  <section id="screenLoader" class="screen on">
-    <div class="loaderFull">
-      <div class="loaderBg"></div>
-      <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div>
-
-      <div class="loaderCenter">
-        <div class="lcInner">
-          <div class="logoRow">
-            <div class="bigLogo">SOCCER CHIPS</div>
-            <div class="miniTag">LEGENDS · Part 1</div>
-          </div>
-
-          <div class="ringWrap">
-            <div class="ring" id="ring" style="--p:0deg">
-              <div class="ringInner"><div class="pct" id="loaderPct">0%</div></div>
-            </div>
-
-            <div class="loadText">
-              <div class="line1" id="loadLine1">Preparing stadium…</div>
-              <div class="line2" id="loadLine2">Готовим обучение, стрелку и спринт.</div>
-            </div>
-          </div>
-
-          <div class="loadFoot">
-            <span>Green Stadium</span>
-            <span>Нажми/тапни для звука</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- GAME -->
-  <section id="screenGame" class="screen">
-    <canvas id="gameCanvas" tabindex="0"></canvas>
-
-    <div class="stamina" aria-label="Stamina">
-      <div class="stRow">
-        <b>Спринт</b>
-        <span class="mode" id="sprintMode">OFF</span>
-        <span id="stPct">100%</span>
-      </div>
-      <div class="stBar"><i id="stFill"></i></div>
-    </div>
-
-    <div class="topPill">
-      <span class="dot"></span>
-      <span><b>ОБУЧЕНИЕ</b></span>
-      <span id="hudStep">1/6</span>
-      <span style="opacity:.5">·</span>
-      <span id="hudTitle">Шаг 1</span>
-    </div>
-
-    <aside class="hints" id="hints">
-      <div class="hHd">
-        <span>Подсказки</span>
-        <button class="miniBtn" id="btnHints" type="button">⇕</button>
-      </div>
-      <div class="hBd" id="hintsBody">
-        <div class="hRow"><span>Движение</span><span class="kbd">WASD</span></div>
-        <div class="hRow"><span>Спринт (тоггл)</span><span class="kbd">Shift</span></div>
-        <div class="hRow"><span>Пинок</span><span class="kbd">Space</span></div>
-        <div class="hRow"><span>Пас</span><span class="kbd">ПКМ</span></div>
-        <div class="hRow"><span>Удар</span><span class="kbd">ЛКМ</span></div>
-      </div>
-    </aside>
-
-    <section class="coach">
-      <div class="coachHd">
-        <div class="coachLeft">
-          <div class="coachAvatar"><img id="coachAvatar" alt="Coach"/></div>
-          <div class="coachMeta">
-            <div class="name" id="coachName">NOVA</div>
-            <div class="role" id="coachRole">друг‑тренер</div>
-          </div>
-        </div>
-        <div class="coachProg" id="coachProg">0%</div>
-      </div>
-      <div class="coachBd">
-        <div class="textBox" id="coachText"></div>
-        <div class="btnRow">
-          <button class="btn" id="btnStart" type="button">Начать</button>
-          <button class="btn secondary" id="btnSkip" type="button">Пропустить</button>
-          <button class="btn secondary" id="btnRestart" type="button">Restart</button>
-        </div>
-      </div>
-    </section>
-
-    <div class="power" id="powerHud">
-      <div class="row"><span id="powerLabel">POWER</span><span id="powerPct">0%</span></div>
-      <div class="pbar"><i id="powerFill"></i></div>
-    </div>
-
-    <!-- Touch controls -->
-    <div class="touchUI" id="touchUI">
-      <div class="joyBase" id="joyBase">
-        <div class="touchLabel">MOVE</div>
-        <div class="joyKnob" id="joyKnob"></div>
-      </div>
-      <div class="aimBase" id="aimBase">
-        <div class="touchLabel">AIM</div>
-        <div class="aimKnob" id="aimKnob"></div>
-      </div>
-      <div class="touchBtns">
-        <button class="tbtn" id="btnTSprint" type="button">SPRINT</button>
-        <button class="tbtn" id="btnTPass" type="button">PASS</button>
-        <button class="tbtn" id="btnTShot" type="button">SHOT</button>
-      </div>
-    </div>
-  </section>
-
-  <script>
-  const $=(s,r=document)=>r.querySelector(s);
-  const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-  const norm=(x,y)=>{ const l=Math.hypot(x,y)||1; return {x:x/l,y:y/l}; };
-
-  const screenLoader=$("#screenLoader");
-  const screenGame=$("#screenGame");
-  function showGame(){
-    screenLoader.classList.remove("on");
-    screenGame.classList.add("on");
-    screenLoader.style.display="none";
-    try{$("#gameCanvas").focus();}catch{}
-  }
-
-  // audio
-  let actx=null;
-  function ensureAudio(){ if(actx) return; try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch{} }
-  document.addEventListener("pointerdown", ensureAudio, {once:true});
-  function sfx(freq=650,dur=0.06,gain=0.04,type="triangle"){
-    if(!actx) return;
-    const t=actx.currentTime;
-    const o=actx.createOscillator();
-    const g=actx.createGain();
-    o.type=type; o.frequency.setValueAtTime(freq,t);
-    g.gain.setValueAtTime(0.0001,t);
-    g.gain.exponentialRampToValueAtTime(gain,t+0.012);
-    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
-    o.connect(g); g.connect(actx.destination);
-    o.start(t); o.stop(t+dur+0.02);
-  }
-  const sfxClick=()=>sfx(520+Math.random()*120,0.07,0.05,"triangle");
-  const sfxKick=()=>sfx(170+Math.random()*80,0.08,0.08,"sine");
-  const sfxGoal=()=>{ sfx(980,0.12,0.08,"triangle"); sfx(620,0.16,0.06,"triangle"); };
-
-  // loader
-  const ring=$("#ring");
-  const loaderPct=$("#loaderPct");
-  const loadLine1=$("#loadLine1");
-  const loadLine2=$("#loadLine2");
-  const phases=[
-    ["Preparing stadium…","Сборка стадиона и линий."],
-    ["Loading training…","6 шагов обучения."],
-    ["Sprint system…","Спринт‑тоггл + энергия."],
-    ["Ready!","Запуск игры…"]
-  ];
-  function setProgress(p){
-    const deg=Math.round(360*(p/100));
-    ring.style.setProperty("--p", deg+"deg");
-    loaderPct.textContent=p+"%";
-    const idx=Math.min(phases.length-1, Math.floor((p/100)*phases.length));
-    loadLine1.textContent=phases[idx][0];
-    loadLine2.textContent=phases[idx][1];
-  }
-  function startLoader(){
-    const start=performance.now();
-    const duration=1400;
-    const failsafe=setTimeout(()=>{ screenLoader.classList.add("hide"); setTimeout(showGame,520); }, 4500);
-    function tick(now){
-      const t=(now-start)/duration;
-      const p=Math.max(0,Math.min(1,t));
-      const eased=1-Math.pow(1-p,3);
-      setProgress(Math.min(100, Math.floor(eased*100)));
-      if(p>=1){
-        clearTimeout(failsafe);
-        setTimeout(()=>{ screenLoader.classList.add("hide"); setTimeout(showGame,520); }, 220);
-        return;
-      }
-      requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  }
-
-  // canvas
-  const canvas=$("#gameCanvas");
-  const ctx=canvas.getContext("2d");
-  function fit(){
-    const dpr=Math.max(1, devicePixelRatio||1);
-    canvas.width=Math.floor(innerWidth*dpr);
-    canvas.height=Math.floor(innerHeight*dpr);
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-  }
-  addEventListener("resize", fit);
-  fit();
-
-  // coach avatar
-  $("#coachAvatar").src=(function(){
-    const svg=`
-    <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
-      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#ff7a00"/><stop offset="0.55" stop-color="#ff2da0"/><stop offset="1" stop-color="#7a35ff"/>
-      </linearGradient></defs>
-      <rect x="6" y="6" width="84" height="84" rx="22" fill="url(#g)" stroke="rgba(21,19,26,.18)"/>
-      <circle cx="48" cy="50" r="22" fill="rgba(255,255,255,.35)" stroke="rgba(21,19,26,.14)"/>
-      <path d="M34 60 C40 66, 56 66, 62 60" fill="none" stroke="rgba(21,19,26,.30)" stroke-width="3" stroke-linecap="round"/>
-    </svg>`;
-    return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg.trim());
-  })();
-
-  // world
-  const WORLD={w:2400,h:1400};
-  const pitch={x:160,y:140,w:2080,h:1120};
-  const goalR={ x:pitch.x+pitch.w, y:pitch.y+pitch.h/2-130, w:14, h:260 };
-
-  const player={x:pitch.x+360, y:pitch.y+pitch.h/2, r:22, baseSpeed:310, sprintMul:1.45};
-  const ball={x:pitch.x+470, y:pitch.y+pitch.h/2, r:10, vx:0, vy:0};
-
-  const camera={x:0,y:0};
-  function updateCamera(){
-    camera.x = clamp(player.x - innerWidth/2, 0, WORLD.w-innerWidth);
-    camera.y = clamp(player.y - innerHeight/2, 0, WORLD.h-innerHeight);
-  }
-
-  // inputs
-  const down=Object.create(null);
-
-  // sprint toggle (Shift press)
-  let sprintToggle=false;
-  let shiftDown=false;
-
-  addEventListener("keydown",(e)=>{
-    down[e.code]=true;
-    if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code)) e.preventDefault();
-
-    if(e.code==="ShiftLeft" || e.code==="ShiftRight"){
-      if(!shiftDown){ // avoid repeat
-        sprintToggle = !sprintToggle;
-        shiftDown=true;
-        updateSprintLabel();
-      }
-      e.preventDefault();
-    }
-  },{passive:false});
-
-  addEventListener("keyup",(e)=>{
-    down[e.code]=false;
-    if(e.code==="ShiftLeft" || e.code==="ShiftRight") shiftDown=false;
-  });
-
-  addEventListener("contextmenu",(e)=>e.preventDefault());
-
-  // aim pointer
-  const pointer={x:innerWidth/2,y:innerHeight/2};
-  canvas.addEventListener("pointermove",(e)=>{ pointer.x=e.clientX; pointer.y=e.clientY; });
-
-  // touch
-  const isTouch = matchMedia("(pointer: coarse)").matches || ("ontouchstart" in window);
-  document.body.classList.toggle("touchOff", !isTouch);
-
-  const joy={active:false,id:null,cx:0,cy:0,x:0,y:0};
-  const aim={active:false,id:null,cx:0,cy:0,x:1,y:0};
-  const joyBase=$("#joyBase"), joyKnob=$("#joyKnob");
-  const aimBase=$("#aimBase"), aimKnob=$("#aimKnob");
-
-  function setKnob(knob, dx, dy, maxR){
-    const r=Math.hypot(dx,dy);
-    const k = r>maxR ? maxR/r : 1;
-    knob.style.transform = `translate(${dx*k}px, ${dy*k}px) translate(-50%,-50%)`;
-  }
-
-  if(isTouch){
-    joyBase.addEventListener("pointerdown",(e)=>{
-      ensureAudio();
-      joy.active=true; joy.id=e.pointerId;
-      const r=joyBase.getBoundingClientRect();
-      joy.cx=r.left+r.width/2; joy.cy=r.top+r.height/2;
-      joyBase.setPointerCapture(e.pointerId);
-    });
-    joyBase.addEventListener("pointermove",(e)=>{
-      if(!joy.active || e.pointerId!==joy.id) return;
-      const dx=e.clientX-joy.cx, dy=e.clientY-joy.cy;
-      const maxR=52;
-      setKnob(joyKnob, dx, dy, maxR);
-      joy.x=clamp(dx/maxR,-1,1);
-      joy.y=clamp(dy/maxR,-1,1);
-    });
-    joyBase.addEventListener("pointerup",(e)=>{
-      if(e.pointerId!==joy.id) return;
-      joy.active=false; joy.id=null;
-      joy.x=0; joy.y=0;
-      joyKnob.style.transform="translate(-50%,-50%)";
-    });
-
-    aimBase.addEventListener("pointerdown",(e)=>{
-      ensureAudio();
-      aim.active=true; aim.id=e.pointerId;
-      const r=aimBase.getBoundingClientRect();
-      aim.cx=r.left+r.width/2; aim.cy=r.top+r.height/2;
-      aimBase.setPointerCapture(e.pointerId);
-    });
-    aimBase.addEventListener("pointermove",(e)=>{
-      if(!aim.active || e.pointerId!==aim.id) return;
-      const dx=e.clientX-aim.cx, dy=e.clientY-aim.cy;
-      const maxR=52;
-      setKnob(aimKnob, dx, dy, maxR);
-      const n=norm(dx,dy);
-      aim.x=n.x; aim.y=n.y;
-    });
-    aimBase.addEventListener("pointerup",(e)=>{
-      if(e.pointerId!==aim.id) return;
-      aim.active=false; aim.id=null;
-      aimKnob.style.transform="translate(-50%,-50%)";
-      aim.x=1; aim.y=0;
-    });
-  }
-
-  // mobile sprint toggle button
-  const btnTSprint=$("#btnTSprint");
-  if(btnTSprint){
-    btnTSprint.addEventListener("click", ()=>{
-      ensureAudio(); sfxClick();
-      sprintToggle=!sprintToggle;
-      updateSprintLabel();
-      btnTSprint.classList.toggle("on", sprintToggle);
-    });
-  }
-
-  // mouse buttons
-  const mouse={left:false,right:false};
-  addEventListener("mousedown",(e)=>{ ensureAudio(); if(e.button===0) mouse.left=true; if(e.button===2) mouse.right=true; });
-  addEventListener("mouseup",(e)=>{ if(e.button===0) mouse.left=false; if(e.button===2) mouse.right=false; });
-
-  // touch pass/shot
-  $("#btnTPass").addEventListener("pointerdown",(e)=>{ ensureAudio(); e.preventDefault(); touchCharge("pass", true); }, {passive:false});
-  $("#btnTPass").addEventListener("pointerup",(e)=>{ e.preventDefault(); touchCharge("pass", false); }, {passive:false});
-  $("#btnTShot").addEventListener("pointerdown",(e)=>{ ensureAudio(); e.preventDefault(); touchCharge("shot", true); }, {passive:false});
-  $("#btnTShot").addEventListener("pointerup",(e)=>{ e.preventDefault(); touchCharge("shot", false); }, {passive:false});
-
-  // stamina system
-  const ST={
-    value:1.0,        // 0..1
-    lock:false,
-    drainSprint:0.12, // ~8s to zero
-    regenIdle:0.22,   // ~4.5s to full
-    regenMove:0.10,   // regen while walking
-    unlockAt:0.34
-  };
-
-  const stPct=$("#stPct");
-  const stFill=$("#stFill");
-  const sprintMode=$("#sprintMode");
-
-  function updateSprintLabel(){
-    sprintMode.textContent = sprintToggle ? "ON" : "OFF";
-  }
-
-  function updateStamina(dt, moving, sprinting){
-    if(sprinting && !ST.lock){
-      ST.value = clamp(ST.value - ST.drainSprint*dt, 0, 1);
-    } else if(moving){
-      ST.value = clamp(ST.value + ST.regenMove*dt, 0, 1);
-    } else {
-      ST.value = clamp(ST.value + ST.regenIdle*dt, 0, 1);
-    }
-
-    if(ST.value<=0.001){
-      ST.lock=true;
-      sprintToggle=false;
-      updateSprintLabel();
-      if(btnTSprint) btnTSprint.classList.remove("on");
-    }
-    if(ST.lock && ST.value>=ST.unlockAt){
-      ST.lock=false;
-    }
-
-    const pct=Math.round(ST.value*100);
-    stPct.textContent=pct+"%";
-    stFill.style.width=pct+"%";
-    // dim label if locked
-    sprintMode.style.opacity = ST.lock ? "0.45" : "0.85";
-  }
-
-  // mechanics: control radius
-  const CONTROL={ extraReach:0.55, pocketDistFactor:0.55, pocketSpring:14.0, pocketDamp:2.0 };
-  function controlRange(){ return player.r + ball.r + player.r*CONTROL.extraReach; }
-  function closeToBall(){ return Math.hypot(ball.x-player.x, ball.y-player.y) <= controlRange(); }
-
-  function aimDir(){
-    if(isTouch) return norm(aim.x, aim.y);
-    const wx=pointer.x+camera.x, wy=pointer.y+camera.y;
-    return norm(wx-player.x, wy-player.y);
-  }
-
-  const PHYS={ friction60:0.987, bounce:0.70, maxBallSpeed:820, lightKick:160, passBase:260, passMax:560, shotBase:360, shotMax:820 };
-  function clampBallSpeed(){
-    const sp=Math.hypot(ball.vx,ball.vy);
-    if(sp>PHYS.maxBallSpeed){
-      const k=PHYS.maxBallSpeed/sp;
-      ball.vx*=k; ball.vy*=k;
-    }
-  }
-  function kick(strength){
-    if(!closeToBall()) return false;
-    const a=aimDir();
-    ball.vx += a.x*strength;
-    ball.vy += a.y*strength;
-    clampBallSpeed();
-    sfxKick();
-    return true;
-  }
-
-  // power
-  const powerHud=$("#powerHud"), powerLabel=$("#powerLabel"), powerPct=$("#powerPct"), powerFill=$("#powerFill");
-  let charging=null, charge=0;
-  function powerShow(type){
-    charging=type; charge=0;
-    powerHud.classList.add("on");
-    powerLabel.textContent=(type==="pass")?"PASS":"SHOT";
-    powerFill.style.width="0%"; powerPct.textContent="0%";
-  }
-  function powerHide(){ powerHud.classList.remove("on"); charging=null; charge=0; }
-  function powerUpdate(dt){
-    if(!charging) return;
-    charge=clamp(charge+dt*0.95,0,1);
-    const pct=Math.round(charge*100);
-    powerFill.style.width=pct+"%";
-    powerPct.textContent=pct+"%";
-  }
-
-  let touchHoldingPass=false, touchHoldingShot=false;
-  function touchCharge(type, isDown){
-    if(type==="pass"){
-      touchHoldingPass=isDown;
-      if(isDown && !charging){ if(!closeToBall()) return; powerShow("pass"); }
-      if(!isDown && charging==="pass"){ kick(PHYS.passBase+charge*PHYS.passMax); powerHide(); }
-    } else {
-      touchHoldingShot=isDown;
-      if(isDown && !charging){ if(!closeToBall()) return; powerShow("shot"); }
-      if(!isDown && charging==="shot"){ kick(PHYS.shotBase+charge*PHYS.shotMax); powerHide(); }
-    }
-  }
-
-  function handleCharge(dt){
-    if(mouse.right && !charging){
-      if(!closeToBall()){ mouse.right=false; return; }
-      powerShow("pass");
-    }
-    if(mouse.left && !charging){
-      if(!closeToBall()){ mouse.left=false; return; }
-      powerShow("shot");
-    }
-    powerUpdate(dt);
-    if(charging==="pass" && !mouse.right && !touchHoldingPass){ kick(PHYS.passBase+charge*PHYS.passMax); powerHide(); }
-    if(charging==="shot" && !mouse.left && !touchHoldingShot){ kick(PHYS.shotBase+charge*PHYS.shotMax); powerHide(); }
-  }
-  function handleSpace(){
-    if(!down["Space"]) return;
-    down["Space"]=false;
-    kick(PHYS.lightKick);
-  }
-
-  function movePlayer(dt){
-    let vx=0,vy=0;
-    if(isTouch){
-      vx=joy.x; vy=joy.y;
-    } else {
-      if(down["KeyW"]||down["ArrowUp"]) vy-=1;
-      if(down["KeyS"]||down["ArrowDown"]) vy+=1;
-      if(down["KeyA"]||down["ArrowLeft"]) vx-=1;
-      if(down["KeyD"]||down["ArrowRight"]) vx+=1;
-      const len=Math.hypot(vx,vy);
-      if(len>0){ vx/=len; vy/=len; }
-    }
-
-    const moving=(Math.hypot(vx,vy)>0.01);
-    const sprinting = sprintToggle && !ST.lock && moving && ST.value>0.02;
-
-    const speed = player.baseSpeed * (sprinting ? player.sprintMul : 1.0);
-
-    player.x += vx*speed*dt;
-    player.y += vy*speed*dt;
-
-    player.x=clamp(player.x, pitch.x+player.r, pitch.x+pitch.w-player.r);
-    player.y=clamp(player.y, pitch.y+player.r, pitch.y+pitch.h-player.r);
-
-    updateStamina(dt, moving, sprinting);
-
-    return {vx,vy,moving,sprinting};
-  }
-
-  function dribble(dt, mv){
-    if(!closeToBall()) return;
-    if(!mv.moving) return;
-    const pocketDist = player.r + ball.r + player.r*CONTROL.pocketDistFactor;
-    const tx = player.x + mv.vx*pocketDist;
-    const ty = player.y + mv.vy*pocketDist;
-
-    ball.vx += (tx-ball.x)*CONTROL.pocketSpring*dt;
-    ball.vy += (ty-ball.y)*CONTROL.pocketSpring*dt;
-    ball.vx *= (1 - CONTROL.pocketDamp*dt);
-    ball.vy *= (1 - CONTROL.pocketDamp*dt);
-    clampBallSpeed();
-  }
-
-  function updateBall(dt){
-    ball.x += ball.vx*dt;
-    ball.y += ball.vy*dt;
-
-    const f=Math.pow(PHYS.friction60, dt*60);
-    ball.vx*=f; ball.vy*=f;
-
-    const l=pitch.x+ball.r, r=pitch.x+pitch.w-ball.r;
-    const t=pitch.y+ball.r, b=pitch.y+pitch.h-ball.r;
-
-    if(ball.y<t){ ball.y=t; ball.vy*=-PHYS.bounce; }
-    if(ball.y>b){ ball.y=b; ball.vy*=-PHYS.bounce; }
-    if(ball.x<l){ ball.x=l; ball.vx*=-PHYS.bounce; }
-
-    const inMouth = (ball.y>goalR.y && ball.y<goalR.y+goalR.h);
-    if(ball.x>r){
-      if(inMouth){
-        ball.x=r+10;
-        ball.vx*=0.6; ball.vy*=0.6;
-      } else {
-        ball.x=r;
-        ball.vx*=-PHYS.bounce;
-      }
-    }
-    clampBallSpeed();
-  }
-
-  // tutorial
-  const hudStep=$("#hudStep");
-  const hudTitle=$("#hudTitle");
-  const coachText=$("#coachText");
-  const coachProg=$("#coachProg");
-
-  const tutorial={
-    running:false, done:false, step:1,
-    passTarget:{x:pitch.x+pitch.w*0.65, y:pitch.y+pitch.h*0.30, r:16},
-    sprintTarget:{x:pitch.x+pitch.w*0.35, y:pitch.y+pitch.h*0.75, r:16},
-    finishRing:{x:pitch.x+pitch.w*0.72, y:pitch.y+pitch.h*0.78, r:36},
-    steps:[
-      {title:"Шаг 1 — Движение", msg:"Хей! Я NOVA 🙂\nДвигайся WASD/стрелками.\nПодойди к мячу.\n\nСтрелка прицела всегда показывает направление."},
-      {title:"Шаг 2 — Контроль", msg:"Супер!\nТы можешь вести мяч в РАДИУСЕ — не касаясь вплотную.\nДоведи мяч в правую зону."},
-      {title:"Шаг 3 — Пас", msg:"ПАС: ПКМ удержать → отпустить.\nПопади в голубую цель."},
-      {title:"Шаг 4 — Удар", msg:"УДАР: ЛКМ удержать → отпустить.\nЗабей в ворота справа."},
-      {title:"Шаг 5 — Спринт", msg:"Спринт теперь ТУМБЛЕРОМ:\nНажми Shift один раз → ON.\nЕщё раз → OFF.\nДобеги до розовой метки."},
-      {title:"Шаг 6 — Финиш", msg:"Последний шаг!\nЗайди в зелёный круг.\nТы красавчик 😄"}
-    ]
-  };
-
-  function setStepUI(){
-    hudStep.textContent=tutorial.step+"/6";
-    hudTitle.textContent=tutorial.steps[tutorial.step-1].title;
-    coachProg.textContent=Math.round(((tutorial.step-1)/6)*100)+"%";
-    coachText.textContent=tutorial.steps[tutorial.step-1].msg;
-  }
-
-  function resetPositions(){
-    player.x=pitch.x+360; player.y=pitch.y+pitch.h/2;
-    ball.x=pitch.x+470; ball.y=pitch.y+pitch.h/2;
-    ball.vx=0; ball.vy=0;
-  }
-
-  function checkTutorial(mv){
-    if(!tutorial.running || tutorial.done) return;
-    const s=tutorial.step;
-
-    if(s===1){
-      if(closeToBall()){ tutorial.step=2; setStepUI(); }
-    } else if(s===2){
-      if(ball.x > pitch.x + pitch.w*0.72){ tutorial.step=3; setStepUI(); }
-    } else if(s===3){
-      const t=tutorial.passTarget;
-      if(Math.hypot(ball.x-t.x, ball.y-t.y) <= ball.r + t.r + 6){ tutorial.step=4; setStepUI(); }
-    } else if(s===4){
-      const inGoal=(ball.x >= pitch.x+pitch.w && ball.y>goalR.y && ball.y<goalR.y+goalR.h);
-      if(inGoal){
-        sfxGoal();
-        tutorial.step=5;
-        resetPositions();
-        setStepUI();
-      }
-    } else if(s===5){
-      const t=tutorial.sprintTarget;
-      if(mv.sprinting && Math.hypot(player.x-t.x, player.y-t.y) <= player.r+t.r){ tutorial.step=6; setStepUI(); }
-    } else if(s===6){
-      const t=tutorial.finishRing;
-      if(Math.hypot(player.x-t.x, player.y-t.y) <= t.r){
-        tutorial.done=true; tutorial.running=false;
-        coachText.textContent="ВОУ! 🔥\nТы прошёл обучение.\n\nВ Part 2 сделаем меню, настройки и сохранение прогресса.";
-        coachProg.textContent="100%";
-      }
-    }
-  }
-
-  // UI buttons
-  $("#btnHints").addEventListener("click", ()=>{ sfxClick(); const b=$("#hintsBody"); b.style.display=(b.style.display==="none")?"":"none"; });
-  $("#btnStart").addEventListener("click", ()=>{ ensureAudio(); sfxClick(); tutorial.running=true; tutorial.done=false; tutorial.step=1; resetPositions(); setStepUI(); });
-  $("#btnRestart").addEventListener("click", ()=>{ ensureAudio(); sfxClick(); tutorial.running=true; tutorial.done=false; tutorial.step=1; resetPositions(); setStepUI(); });
-  $("#btnSkip").addEventListener("click", ()=>{ ensureAudio(); sfxClick(); tutorial.running=false; tutorial.done=true; coachText.textContent="Ок 🙂 Обучение пропущено.\nВ Part 2 будет меню, и тренировка станет отдельным режимом."; coachProg.textContent="—"; });
-
-  // hints ready
-  setStepUI();
-
-  // sprint label init
-  updateSprintLabel();
-
-  // draw
-  function drawAimArrow(){
-    const a=aimDir();
-    const len=78;
-    const x1=player.x, y1=player.y;
-    const x2=player.x + a.x*len;
-    const y2=player.y + a.y*len;
-
-    ctx.save();
-    ctx.strokeStyle="rgba(21,19,26,.58)";
-    ctx.lineWidth=3;
-    ctx.lineCap="round";
-    ctx.setLineDash([6,8]);
-    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-    ctx.setLineDash([]);
-    const ang=Math.atan2(y2-y1,x2-x1);
-    const ah=10;
-    ctx.fillStyle="rgba(255,122,0,.88)";
-    ctx.beginPath();
-    ctx.moveTo(x2,y2);
-    ctx.lineTo(x2 - ah*Math.cos(ang-0.45), y2 - ah*Math.sin(ang-0.45));
-    ctx.lineTo(x2 - ah*Math.cos(ang+0.45), y2 - ah*Math.sin(ang+0.45));
-    ctx.closePath(); ctx.fill();
-    ctx.restore();
-  }
-
-  function draw3DChip(x,y,r,c1,c2){
-    ctx.save();
-    ctx.globalAlpha=0.22;
-    ctx.fillStyle="rgba(21,19,26,.55)";
-    ctx.beginPath(); ctx.ellipse(x+10,y+12,r*1.2,r*0.78,0.25,0,Math.PI*2); ctx.fill();
-    ctx.restore();
-
-    const grd=ctx.createLinearGradient(x-r,y,x+r,y);
-    grd.addColorStop(0,c1); grd.addColorStop(0.5,c1);
-    grd.addColorStop(0.5,c2); grd.addColorStop(1,c2);
-    ctx.fillStyle=grd;
-    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
-
-    const rim=ctx.createRadialGradient(x-r*0.3,y-r*0.45,2,x,y,r*1.3);
-    rim.addColorStop(0,"rgba(255,255,255,.95)");
-    rim.addColorStop(0.35,"rgba(255,255,255,.28)");
-    rim.addColorStop(1,"rgba(21,19,26,.18)");
-    ctx.strokeStyle=rim;
-    ctx.lineWidth=3;
-    ctx.beginPath(); ctx.arc(x,y,r-1.5,0,Math.PI*2); ctx.stroke();
-
-    // stronger highlight
-    ctx.globalAlpha=0.42;
-    ctx.fillStyle="rgba(255,255,255,.95)";
-    ctx.beginPath(); ctx.ellipse(x-r*0.22,y-r*0.36,r*0.40,r*0.24,-0.35,0,Math.PI*2); ctx.fill();
-    ctx.globalAlpha=1;
-  }
-
-  function drawPitch(){
-    // outside = grass
-    ctx.fillStyle="rgba(20,90,40,.55)";
-    ctx.fillRect(0,0,WORLD.w,WORLD.h);
-
-    // pitch grass
-    const g=ctx.createLinearGradient(pitch.x,pitch.y,pitch.x+pitch.w,pitch.y+pitch.h);
-    g.addColorStop(0,"rgba(50,190,90,.95)");
-    g.addColorStop(1,"rgba(30,160,75,.95)");
-    ctx.fillStyle=g;
-    ctx.fillRect(pitch.x,pitch.y,pitch.w,pitch.h);
-
-    // stripes
-    ctx.save();
-    ctx.globalAlpha=0.12;
-    for(let i=0;i<12;i++){
-      ctx.fillStyle = (i%2) ? "rgba(255,255,255,.80)" : "rgba(0,0,0,.40)";
-      ctx.fillRect(pitch.x + i*(pitch.w/12), pitch.y, pitch.w/12, pitch.h);
-    }
-    ctx.restore();
-
-    // lines
-    ctx.strokeStyle="rgba(255,255,255,.70)";
-    ctx.lineWidth=2;
-    ctx.strokeRect(pitch.x,pitch.y,pitch.w,pitch.h);
-
-    ctx.beginPath();
-    ctx.moveTo(pitch.x+pitch.w/2, pitch.y);
-    ctx.lineTo(pitch.x+pitch.w/2, pitch.y+pitch.h);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(pitch.x+pitch.w/2, pitch.y+pitch.h/2, 78, 0, Math.PI*2);
-    ctx.stroke();
-
-    // boxes
-    ctx.strokeRect(pitch.x, pitch.y+pitch.h/2-150, 170, 300);
-    ctx.strokeRect(pitch.x+pitch.w-170, pitch.y+pitch.h/2-150, 170, 300);
-    ctx.strokeRect(pitch.x, pitch.y+pitch.h/2-80, 90, 160);
-    ctx.strokeRect(pitch.x+pitch.w-90, pitch.y+pitch.h/2-80, 90, 160);
-
-    // goal mouth
-    ctx.fillStyle="rgba(255,255,255,.28)";
-    ctx.fillRect(goalR.x, goalR.y, goalR.w, goalR.h);
-
-    // tutorial markers (no debug circles)
-    if(tutorial.running && !tutorial.done){
-      if(tutorial.step===2){
-        ctx.fillStyle="rgba(255,122,0,.12)";
-        ctx.fillRect(pitch.x+pitch.w*0.72, pitch.y, pitch.w*0.28, pitch.h);
-      }
-      if(tutorial.step===3){
-        const t=tutorial.passTarget;
-        ctx.fillStyle="rgba(33,215,255,.22)";
-        ctx.beginPath(); ctx.arc(t.x,t.y,t.r,0,Math.PI*2); ctx.fill();
-      }
-      if(tutorial.step===5){
-        const t=tutorial.sprintTarget;
-        ctx.fillStyle="rgba(255,45,160,.22)";
-        ctx.beginPath(); ctx.arc(t.x,t.y,t.r,0,Math.PI*2); ctx.fill();
-      }
-      if(tutorial.step===6){
-        const t=tutorial.finishRing;
-        ctx.strokeStyle="rgba(60,255,143,.55)";
-        ctx.lineWidth=5;
-        ctx.beginPath(); ctx.arc(t.x,t.y,t.r,0,Math.PI*2); ctx.stroke();
-      }
-    }
-  }
-
-  function drawWorld(){
-    updateCamera();
-    ctx.clearRect(0,0,innerWidth,innerHeight);
-    ctx.save();
-    ctx.translate(-camera.x, -camera.y);
-
-    drawPitch();
-    drawAimArrow();
-
-    // ball + player
-    draw3DChip(ball.x, ball.y, ball.r, "rgba(255,255,255,.98)", "rgba(255,255,255,.82)");
-    draw3DChip(player.x, player.y, player.r, "#ff7a00", "#7a35ff");
-
-    ctx.restore();
-  }
-
-  // loop
-  let last=performance.now();
-  function loop(now){
-    const dt=Math.min(0.033,(now-last)/1000);
-    last=now;
-
-    if(screenGame.classList.contains("on")){
-      const mv=movePlayer(dt);
-      dribble(dt, mv);
-      handleCharge(dt);
-      handleSpace();
-      updateBall(dt);
-      checkTutorial(mv);
-      drawWorld();
-    }
-
-    requestAnimationFrame(loop);
-  }
-
-  // start
-  startLoader();
-  requestAnimationFrame(loop);
-
-  // safety
-  window.addEventListener("error", ()=>{
-    try{ screenLoader.classList.add("hide"); setTimeout(showGame,520); }catch{}
-  });
-  </script>
-  <!-- ===================== PART 1.5/15 — MOBILE UX v4 (BIGGER SPREAD BUTTONS + SPRINT FIX + SMALLER COACH) ===================== -->
-<style id="P1_5_MOBILE_V4_STYLE">
+<!-- ===================== PART 1.5/15 — MOBILE UX v5 (BETTER DRIBBLE + BIGGER BUTTONS + COACH COLLAPSE + SPRINT FIX) ===================== -->
+<style id="P1_5_MOBILE_V5_STYLE">
   body.mobile-on .touchUI{ display:block !important; }
   body.mobile-off .touchUI{ display:none !important; }
 
   /* AIM-джойстик скрываем */
   body.mobile-on #aimBase{ display:none !important; }
 
-  /* Подсказки на телефоне убираем */
+  /* Подсказки (панель) на телефоне убираем */
   body.mobile-on #hints{ display:none !important; }
 
-  /* Тренер: максимально низко и компактно (ТОЛЬКО мобильный) */
+  /* ---------- COACH: супер компакт + сворачивание ---------- */
   body.mobile-on .coach{
-    width: calc(100% - 16px) !important;
-    left: 8px !important;
-    bottom: 8px !important;
+    width: calc(100% - 12px) !important;
+    left: 6px !important;
+    bottom: 6px !important;
     border-radius: 18px !important;
-    /* чтобы не лез на кнопки: поднимем слой ниже кнопок */
     z-index: 5200 !important;
   }
-  body.mobile-on .coachHd{ padding: 7px 9px !important; }
-  body.mobile-on .coach .textBox{
-    height: 52px !important;      /* ещё меньше */
+  body.mobile-on .coachHd{
+    padding: 6px 9px !important;
+  }
+  body.mobile-on .coachAvatar{ width:36px !important; height:36px !important; border-radius:14px !important; }
+  body.mobile-on .coachMeta .name{ font-size:12px !important; }
+  body.mobile-on .coachMeta .role{ font-size:11px !important; }
+
+  /* режим “свернуто” (по умолчанию) */
+  body.mobile-on.mobile-coach-collapsed .coach .textBox{
+    height: 36px !important;
+    font-size: 11.5px !important;
+    padding: 6px 8px !important;
+  }
+  body.mobile-on.mobile-coach-collapsed .coach .btnRow{
+    display:none !important;
+  }
+
+  /* режим “развернуто” */
+  body.mobile-on.mobile-coach-expanded .coach .textBox{
+    height: 64px !important;
     font-size: 12px !important;
     padding: 7px 8px !important;
   }
-  body.mobile-on .btnRow{ gap: 7px !important; }
-  body.mobile-on .btn{
+  body.mobile-on.mobile-coach-expanded .coach .btnRow{
+    display:flex !important;
+    gap: 7px !important;
+  }
+  body.mobile-on.mobile-coach-expanded .btn{
     padding: 8px 9px !important;
     border-radius: 14px !important;
   }
 
-  /* Джойстик: чуть крупнее */
+  /* ---------- JOY: чуть крупнее ---------- */
   body.mobile-on #joyBase{
-    width: 180px !important;
-    height: 180px !important;
+    width: 184px !important;
+    height: 184px !important;
     left: 10px !important;
     bottom: 10px !important;
   }
-  body.mobile-on #joyKnob{ width: 70px !important; height: 70px !important; }
+  body.mobile-on #joyKnob{ width: 72px !important; height: 72px !important; }
 
-  /* ---------- Кнопки: РАЗНЕСЕНЫ СИЛЬНЕЕ + ЧУТЬ БОЛЬШЕ ---------- */
+  /* ---------- BUTTONS: больше + дальше ---------- */
   body.mobile-on .touchBtns{
     position:absolute !important;
     right: 10px !important;
     bottom: 10px !important;
     top: auto !important;
 
-    width: 270px !important;   /* было ~220 */
-    height: 270px !important;  /* больше расстояние */
+    width: 300px !important;   /* больше расстояние */
+    height: 300px !important;
+
     pointer-events:auto !important;
-    z-index: 6500 !important;  /* поверх тренера */
+    z-index: 6500 !important;
   }
 
   body.mobile-on .tbtn{
     position:absolute !important;
-    width: 88px !important;     /* было 78 */
-    height: 88px !important;
+    width: 96px !important;     /* чуть больше */
+    height: 96px !important;
     border-radius: 50% !important;
     padding:0 !important;
     display:grid !important;
@@ -1201,13 +89,12 @@
     box-shadow: 0 4px 0 rgba(21,19,26,.10) !important;
   }
 
-  /* Ромб с большим разносом: центр = (91,91) */
-  body.mobile-on #btnTSprint{ left: 91px !important; top: 0px !important; }
-  body.mobile-on #btnTPass  { left: 0px  !important; top: 91px !important; }
-  body.mobile-on #btnTShot  { right: 0px !important; top: 91px !important; }
-  body.mobile-on #btnTKick  { left: 91px !important; bottom: 0px !important; }
+  /* Ромб с большим разносом: центр = (102,102) */
+  body.mobile-on #btnTSprint{ left: 102px !important; top: 0px !important; }
+  body.mobile-on #btnTPass  { left: 0px   !important; top: 102px !important; }
+  body.mobile-on #btnTShot  { right: 0px  !important; top: 102px !important; }
+  body.mobile-on #btnTKick  { left: 102px !important; bottom: 0px !important; }
 
-  /* Цвета */
   body.mobile-on #btnTSprint{ background: rgba(60,255,143,.25) !important; border-color: rgba(60,255,143,.35) !important; }
   body.mobile-on #btnTPass  { background: rgba(33,215,255,.22) !important; border-color: rgba(33,215,255,.30) !important; }
   body.mobile-on #btnTShot  { background: rgba(255,45,160,.18) !important; border-color: rgba(255,45,160,.26) !important; }
@@ -1215,26 +102,44 @@
 
   body.mobile-on .tbtn.on{ filter: brightness(1.08); }
 
-  /* На маленьких экранах */
   @media (max-width: 380px){
-    body.mobile-on #joyBase{ width: 168px !important; height: 168px !important; }
-    body.mobile-on .touchBtns{ width: 252px !important; height: 252px !important; }
-    body.mobile-on .tbtn{ width: 82px !important; height: 82px !important; }
-    body.mobile-on #btnTSprint, body.mobile-on #btnTKick{ left: 85px !important; }
-    body.mobile-on #btnTPass, body.mobile-on #btnTShot{ top: 85px !important; }
-    body.mobile-on .coach .textBox{ height: 48px !important; }
+    body.mobile-on #joyBase{ width: 172px !important; height: 172px !important; }
+    body.mobile-on .touchBtns{ width: 276px !important; height: 276px !important; }
+    body.mobile-on .tbtn{ width: 90px !important; height: 90px !important; }
+    body.mobile-on #btnTSprint, body.mobile-on #btnTKick{ left: 93px !important; }
+    body.mobile-on #btnTPass, body.mobile-on #btnTShot{ top: 93px !important; }
   }
 </style>
 
-<script id="P1_5_MOBILE_V4_SCRIPT">
+<script id="P1_5_MOBILE_V5_SCRIPT">
 (() => {
   const $ = (s,r=document)=>r.querySelector(s);
 
-  // Detect mobile
+  // mobile detect
   const isTouch = matchMedia("(pointer: coarse)").matches || ("ontouchstart" in window);
   document.body.classList.toggle("mobile-on", isTouch);
   document.body.classList.toggle("mobile-off", !isTouch);
   if(!isTouch) return;
+
+  // По умолчанию: свернуть тренера (чтобы не мешал)
+  document.body.classList.add("mobile-coach-collapsed");
+
+  // Тап по шапке тренера — раскрыть/свернуть
+  const coach = document.querySelector(".coach");
+  const coachHd = coach ? coach.querySelector(".coachHd") : null;
+  if(coachHd){
+    coachHd.style.cursor = "pointer";
+    coachHd.addEventListener("click", (e)=>{
+      e.preventDefault();
+      const collapsed = document.body.classList.contains("mobile-coach-collapsed");
+      document.body.classList.toggle("mobile-coach-collapsed", !collapsed);
+      document.body.classList.toggle("mobile-coach-expanded", collapsed);
+    });
+  }
+
+  // ensure globals
+  if(typeof window.joy !== "object") window.joy = {x:0,y:0,active:false,id:null,cx:0,cy:0};
+  if(typeof window.aim !== "object") window.aim = {x:1,y:0,active:false,id:null,cx:0,cy:0};
 
   // Elements
   const joyBase = $("#joyBase");
@@ -1243,7 +148,7 @@
   const btnPass = $("#btnTPass");
   const btnShot = $("#btnTShot");
 
-  // Create KICK if missing
+  // Add KICK if missing
   const btnsWrap = document.querySelector(".touchBtns");
   let btnKick = $("#btnTKick");
   if(btnsWrap && !btnKick){
@@ -1255,17 +160,27 @@
     btnsWrap.appendChild(btnKick);
   }
 
-  // Ensure globals
-  if(typeof window.joy !== "object") window.joy = {x:0,y:0,active:false,id:null,cx:0,cy:0};
-  if(typeof window.aim !== "object") window.aim = {x:1,y:0,active:false,id:null,cx:0,cy:0};
+  // ---------- Улучшаем сцепление на телефоне (чуть-чуть) ----------
+  // CONTROL и PHYS существуют в Part 1. Это НЕ “липнет намертво”, просто легче вести.
+  try{
+    if(typeof CONTROL === "object"){
+      CONTROL.extraReach = Math.min(0.70, (CONTROL.extraReach ?? 0.55) + 0.08);   // радиус чуть больше
+      CONTROL.pocketSpring = (CONTROL.pocketSpring ?? 14.0) + 2.8;              // сильнее подтягивание
+      CONTROL.pocketDamp   = Math.max(1.2, (CONTROL.pocketDamp ?? 2.0) - 0.35);  // меньше демпф → живее и липче
+    }
+    if(typeof PHYS === "object"){
+      // чуть больше трения → мяч меньше “убегает”
+      PHYS.friction60 = Math.max(0.980, (PHYS.friction60 ?? 0.987) - 0.003);
+    }
+  }catch{}
 
-  // Config
+  // ---------- DRIFT FIX + One stick aim ----------
   const CFG = {
-    maxR: 62,
-    dead: 0.24,        // ещё чуть больше deadzone
+    maxR: 64,
+    dead: 0.24,
     smooth: 0.22,
     aimFromMoveDead: 0.26,
-    snapZero: 0.07     // сильнее анти-дрейф
+    snapZero: 0.07
   };
 
   let joyTX=0, joyTY=0;
@@ -1287,7 +202,6 @@
     return {x:n.x*rr, y:n.y*rr};
   }
 
-  // One joystick = move + aim
   joyBase.addEventListener("pointerdown",(e)=>{
     if(typeof ensureAudio==="function") ensureAudio();
     joy.active=true;
@@ -1308,8 +222,8 @@
 
     let x=clamp(dx/CFG.maxR,-1,1);
     let y=clamp(dy/CFG.maxR,-1,1);
-    const d=applyDead(x,y);
 
+    const d=applyDead(x,y);
     joyTX=d.x; joyTY=d.y;
 
     const mag=Math.hypot(d.x,d.y);
@@ -1321,8 +235,7 @@
 
   function stopJoy(e){
     if(e && e.pointerId!==joy.id) return;
-    joy.active=false;
-    joy.id=null;
+    joy.active=false; joy.id=null;
     joyTX=0; joyTY=0;
     joy.x=0; joy.y=0;
     joyKnob.style.transform="translate(-50%,-50%)";
@@ -1330,7 +243,6 @@
   joyBase.addEventListener("pointerup", stopJoy, {passive:false});
   joyBase.addEventListener("pointercancel", stopJoy, {passive:false});
 
-  // Smooth loop + anti-drift snap
   function smoothLoop(){
     if(!joy.active){ joyTX=0; joyTY=0; }
 
@@ -1347,7 +259,7 @@
   }
   requestAnimationFrame(smoothLoop);
 
-  // PASS/SHOT hold
+  // ---------- PASS/SHOT hold ----------
   function callTouchCharge(type, down){
     if(typeof touchCharge === "function"){
       touchCharge(type, down);
@@ -1363,14 +275,13 @@
     btnPass.addEventListener("pointerup",(e)=>{ e.preventDefault(); callTouchCharge("pass", false); btnPass.classList.remove("on"); }, {passive:false});
     btnPass.addEventListener("pointercancel",(e)=>{ e.preventDefault(); callTouchCharge("pass", false); btnPass.classList.remove("on"); }, {passive:false});
   }
-
   if(btnShot){
     btnShot.addEventListener("pointerdown",(e)=>{ e.preventDefault(); callTouchCharge("shot", true); btnShot.classList.add("on"); }, {passive:false});
     btnShot.addEventListener("pointerup",(e)=>{ e.preventDefault(); callTouchCharge("shot", false); btnShot.classList.remove("on"); }, {passive:false});
     btnShot.addEventListener("pointercancel",(e)=>{ e.preventDefault(); callTouchCharge("shot", false); btnShot.classList.remove("on"); }, {passive:false});
   }
 
-  // KICK
+  // ---------- KICK ----------
   if(btnKick){
     btnKick.addEventListener("click",(e)=>{
       e.preventDefault();
@@ -1382,9 +293,8 @@
     });
   }
 
-  // ✅ SPRINT FIX:
-  // На телефоне мы НЕ пытаемся напрямую менять sprintToggle,
-  // а имитируем нажатие Shift — тогда всегда срабатывает логика Part 1.
+  // ---------- SPRINT FIX (железно) ----------
+  // Эмулируем Shift, чтобы включался тот же тумблер, что и на ПК.
   function toggleSprintByShift(){
     try{
       window.dispatchEvent(new KeyboardEvent("keydown",{code:"ShiftLeft"}));
@@ -1392,9 +302,10 @@
     }catch{}
   }
 
+  // синхронизируем подсветку кнопки с реальным текстом ON/OFF
   function syncSprintButton(){
     const modeEl = document.getElementById("sprintMode");
-    if(!modeEl || !btnSprint) return;
+    if(!modeEl || !btnSprint) { requestAnimationFrame(syncSprintButton); return; }
     const on = (modeEl.textContent || "").trim().toUpperCase() === "ON";
     btnSprint.classList.toggle("on", on);
     requestAnimationFrame(syncSprintButton);
@@ -1409,7 +320,7 @@
     });
   }
 
-  // Vibro
+  // vibro
   function vib(ms=14){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch{} }
   if(btnPass) btnPass.addEventListener("pointerdown", ()=>vib(10));
   if(btnShot) btnShot.addEventListener("pointerdown", ()=>vib(12));
@@ -1418,4 +329,4 @@
 
 })();
 </script>
-<!-- ===================== END PART 1.5/15 — MOBILE UX v4 ===================== -->
+<!-- ===================== END PART 1.5
