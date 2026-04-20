@@ -1130,63 +1130,66 @@
     try{ screenLoader.classList.add("hide"); setTimeout(showGame,520); }catch{}
   });
   </script>
-  <!-- ===================== PART 1.5/15 — MOBILE UX v3 (RADIAL BUTTONS + NO DRIFT) ===================== -->
-<style id="P1_5_MOBILE_V3_STYLE">
+  <!-- ===================== PART 1.5/15 — MOBILE UX v4 (BIGGER SPREAD BUTTONS + SPRINT FIX + SMALLER COACH) ===================== -->
+<style id="P1_5_MOBILE_V4_STYLE">
   body.mobile-on .touchUI{ display:block !important; }
   body.mobile-off .touchUI{ display:none !important; }
 
-  /* Убираем AIM-джойстик полностью */
+  /* AIM-джойстик скрываем */
   body.mobile-on #aimBase{ display:none !important; }
 
-  /* Убираем подсказки на телефоне */
+  /* Подсказки на телефоне убираем */
   body.mobile-on #hints{ display:none !important; }
 
-  /* Уменьшаем окно тренера только на телефоне */
+  /* Тренер: максимально низко и компактно (ТОЛЬКО мобильный) */
   body.mobile-on .coach{
-    width: calc(100% - 20px) !important;
+    width: calc(100% - 16px) !important;
+    left: 8px !important;
+    bottom: 8px !important;
+    border-radius: 18px !important;
+    /* чтобы не лез на кнопки: поднимем слой ниже кнопок */
+    z-index: 5200 !important;
+  }
+  body.mobile-on .coachHd{ padding: 7px 9px !important; }
+  body.mobile-on .coach .textBox{
+    height: 52px !important;      /* ещё меньше */
+    font-size: 12px !important;
+    padding: 7px 8px !important;
+  }
+  body.mobile-on .btnRow{ gap: 7px !important; }
+  body.mobile-on .btn{
+    padding: 8px 9px !important;
+    border-radius: 14px !important;
+  }
+
+  /* Джойстик: чуть крупнее */
+  body.mobile-on #joyBase{
+    width: 180px !important;
+    height: 180px !important;
     left: 10px !important;
     bottom: 10px !important;
-    border-radius: 20px !important;
   }
-  body.mobile-on .coach .textBox{
-    height: 64px !important;
-    font-size: 12px !important;
-    padding: 8px 9px !important;
-  }
-  body.mobile-on .coachHd{ padding: 8px 10px !important; }
-  body.mobile-on .btn{ padding: 9px 10px !important; border-radius: 14px !important; }
+  body.mobile-on #joyKnob{ width: 70px !important; height: 70px !important; }
 
-  /* Джойстик движения крупнее */
-  body.mobile-on #joyBase{
-    width: 176px !important;
-    height: 176px !important;
-    left: 12px !important;
-    bottom: 12px !important;
-  }
-  body.mobile-on #joyKnob{
-    width: 68px !important;
-    height: 68px !important;
-  }
-
-  /* ---------- КНОПКИ: РОМБИКОМ (разнесены) ---------- */
+  /* ---------- Кнопки: РАЗНЕСЕНЫ СИЛЬНЕЕ + ЧУТЬ БОЛЬШЕ ---------- */
   body.mobile-on .touchBtns{
-    position: absolute !important;
-    right: 12px !important;
-    bottom: 12px !important;
+    position:absolute !important;
+    right: 10px !important;
+    bottom: 10px !important;
     top: auto !important;
 
-    width: 220px !important;
-    height: 220px !important;
-
-    pointer-events: auto !important;
+    width: 270px !important;   /* было ~220 */
+    height: 270px !important;  /* больше расстояние */
+    pointer-events:auto !important;
+    z-index: 6500 !important;  /* поверх тренера */
   }
 
   body.mobile-on .tbtn{
     position:absolute !important;
-    width: 78px !important;
-    height: 78px !important;
+    width: 88px !important;     /* было 78 */
+    height: 88px !important;
     border-radius: 50% !important;
-    padding: 0 !important;
+    padding:0 !important;
     display:grid !important;
     place-items:center !important;
     font-size: 12px !important;
@@ -1198,11 +1201,11 @@
     box-shadow: 0 4px 0 rgba(21,19,26,.10) !important;
   }
 
-  /* Раскладка ромбом: Sprint сверху, Pass слева, Shot справа, Kick снизу */
-  body.mobile-on #btnTSprint{ left: 71px !important; top: 0px !important; }
-  body.mobile-on #btnTPass  { left: 0px  !important; top: 71px !important; }
-  body.mobile-on #btnTShot  { right: 0px !important; top: 71px !important; }
-  body.mobile-on #btnTKick  { left: 71px !important; bottom: 0px !important; }
+  /* Ромб с большим разносом: центр = (91,91) */
+  body.mobile-on #btnTSprint{ left: 91px !important; top: 0px !important; }
+  body.mobile-on #btnTPass  { left: 0px  !important; top: 91px !important; }
+  body.mobile-on #btnTShot  { right: 0px !important; top: 91px !important; }
+  body.mobile-on #btnTKick  { left: 91px !important; bottom: 0px !important; }
 
   /* Цвета */
   body.mobile-on #btnTSprint{ background: rgba(60,255,143,.25) !important; border-color: rgba(60,255,143,.35) !important; }
@@ -1212,34 +1215,35 @@
 
   body.mobile-on .tbtn.on{ filter: brightness(1.08); }
 
+  /* На маленьких экранах */
   @media (max-width: 380px){
-    body.mobile-on #joyBase{ width: 164px !important; height: 164px !important; }
-    body.mobile-on .touchBtns{ width: 206px !important; height: 206px !important; }
-    body.mobile-on .tbtn{ width: 72px !important; height: 72px !important; }
-    body.mobile-on #btnTSprint, body.mobile-on #btnTKick{ left: 67px !important; }
-    body.mobile-on #btnTPass, body.mobile-on #btnTShot{ top: 67px !important; }
-    body.mobile-on .coach .textBox{ height: 58px !important; }
+    body.mobile-on #joyBase{ width: 168px !important; height: 168px !important; }
+    body.mobile-on .touchBtns{ width: 252px !important; height: 252px !important; }
+    body.mobile-on .tbtn{ width: 82px !important; height: 82px !important; }
+    body.mobile-on #btnTSprint, body.mobile-on #btnTKick{ left: 85px !important; }
+    body.mobile-on #btnTPass, body.mobile-on #btnTShot{ top: 85px !important; }
+    body.mobile-on .coach .textBox{ height: 48px !important; }
   }
 </style>
 
-<script id="P1_5_MOBILE_V3_SCRIPT">
+<script id="P1_5_MOBILE_V4_SCRIPT">
 (() => {
   const $ = (s,r=document)=>r.querySelector(s);
 
-  // detect mobile
+  // Detect mobile
   const isTouch = matchMedia("(pointer: coarse)").matches || ("ontouchstart" in window);
   document.body.classList.toggle("mobile-on", isTouch);
   document.body.classList.toggle("mobile-off", !isTouch);
   if(!isTouch) return;
 
-  // elements
+  // Elements
   const joyBase = $("#joyBase");
   const joyKnob = $("#joyKnob");
   const btnSprint = $("#btnTSprint");
   const btnPass = $("#btnTPass");
   const btnShot = $("#btnTShot");
 
-  // add kick if missing
+  // Create KICK if missing
   const btnsWrap = document.querySelector(".touchBtns");
   let btnKick = $("#btnTKick");
   if(btnsWrap && !btnKick){
@@ -1251,16 +1255,17 @@
     btnsWrap.appendChild(btnKick);
   }
 
-  // ensure globals exist
+  // Ensure globals
   if(typeof window.joy !== "object") window.joy = {x:0,y:0,active:false,id:null,cx:0,cy:0};
   if(typeof window.aim !== "object") window.aim = {x:1,y:0,active:false,id:null,cx:0,cy:0};
 
+  // Config
   const CFG = {
     maxR: 62,
-    dead: 0.22,           // ✅ больше мёртвая зона -> меньше дрейфа
+    dead: 0.24,        // ещё чуть больше deadzone
     smooth: 0.22,
-    aimFromMoveDead: 0.25,
-    snapZero: 0.06        // ✅ если меньше этого -> принудительный 0
+    aimFromMoveDead: 0.26,
+    snapZero: 0.07     // сильнее анти-дрейф
   };
 
   let joyTX=0, joyTY=0;
@@ -1268,6 +1273,7 @@
 
   function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
   function norm(x,y){ const l=Math.hypot(x,y)||1; return {x:x/l, y:y/l}; }
+
   function setKnob(dx, dy){
     const r = Math.hypot(dx,dy);
     const k = r>CFG.maxR ? CFG.maxR/r : 1;
@@ -1281,9 +1287,9 @@
     return {x:n.x*rr, y:n.y*rr};
   }
 
-  // joystick events
+  // One joystick = move + aim
   joyBase.addEventListener("pointerdown",(e)=>{
-    if(typeof ensureAudio === "function") ensureAudio();
+    if(typeof ensureAudio==="function") ensureAudio();
     joy.active=true;
     joy.id=e.pointerId;
     const r=joyBase.getBoundingClientRect();
@@ -1298,18 +1304,17 @@
 
     const dx=e.clientX-joy.cx;
     const dy=e.clientY-joy.cy;
-
     setKnob(dx,dy);
 
-    let x = clamp(dx/CFG.maxR,-1,1);
-    let y = clamp(dy/CFG.maxR,-1,1);
+    let x=clamp(dx/CFG.maxR,-1,1);
+    let y=clamp(dy/CFG.maxR,-1,1);
+    const d=applyDead(x,y);
 
-    const d = applyDead(x,y);
     joyTX=d.x; joyTY=d.y;
 
-    const mag = Math.hypot(d.x,d.y);
+    const mag=Math.hypot(d.x,d.y);
     if(mag > CFG.aimFromMoveDead){
-      const n = norm(d.x,d.y);
+      const n=norm(d.x,d.y);
       lastAimX=n.x; lastAimY=n.y;
     }
   }, {passive:false});
@@ -1318,31 +1323,25 @@
     if(e && e.pointerId!==joy.id) return;
     joy.active=false;
     joy.id=null;
-
-    // ✅ жёсткий сброс целей и текущих значений
     joyTX=0; joyTY=0;
     joy.x=0; joy.y=0;
-
     joyKnob.style.transform="translate(-50%,-50%)";
   }
   joyBase.addEventListener("pointerup", stopJoy, {passive:false});
   joyBase.addEventListener("pointercancel", stopJoy, {passive:false});
 
-  // smooth loop + анти‑дрейф
+  // Smooth loop + anti-drift snap
   function smoothLoop(){
-    // если не активен — держим цель 0
     if(!joy.active){ joyTX=0; joyTY=0; }
 
     joy.x = joy.x + (joyTX - joy.x)*CFG.smooth;
     joy.y = joy.y + (joyTY - joy.y)*CFG.smooth;
 
-    // ✅ snap to zero (убирает “само едет”)
     if(Math.abs(joy.x) < CFG.snapZero) joy.x = 0;
     if(Math.abs(joy.y) < CFG.snapZero) joy.y = 0;
 
-    // aim — по последнему направлению движения
-    aim.x = aim.x + (lastAimX - aim.x)*0.28;
-    aim.y = aim.y + (lastAimY - aim.y)*0.28;
+    aim.x = aim.x + (lastAimX - aim.x)*0.30;
+    aim.y = aim.y + (lastAimY - aim.y)*0.30;
 
     requestAnimationFrame(smoothLoop);
   }
@@ -1355,7 +1354,7 @@
       return;
     }
     if(typeof kick === "function" && down===false){
-      kick(type==="pass"? 280 : 380);
+      kick(type==="pass"?280:380);
     }
   }
 
@@ -1364,6 +1363,7 @@
     btnPass.addEventListener("pointerup",(e)=>{ e.preventDefault(); callTouchCharge("pass", false); btnPass.classList.remove("on"); }, {passive:false});
     btnPass.addEventListener("pointercancel",(e)=>{ e.preventDefault(); callTouchCharge("pass", false); btnPass.classList.remove("on"); }, {passive:false});
   }
+
   if(btnShot){
     btnShot.addEventListener("pointerdown",(e)=>{ e.preventDefault(); callTouchCharge("shot", true); btnShot.classList.add("on"); }, {passive:false});
     btnShot.addEventListener("pointerup",(e)=>{ e.preventDefault(); callTouchCharge("shot", false); btnShot.classList.remove("on"); }, {passive:false});
@@ -1382,22 +1382,34 @@
     });
   }
 
-  // Sprint toggle
+  // ✅ SPRINT FIX:
+  // На телефоне мы НЕ пытаемся напрямую менять sprintToggle,
+  // а имитируем нажатие Shift — тогда всегда срабатывает логика Part 1.
+  function toggleSprintByShift(){
+    try{
+      window.dispatchEvent(new KeyboardEvent("keydown",{code:"ShiftLeft"}));
+      window.dispatchEvent(new KeyboardEvent("keyup",{code:"ShiftLeft"}));
+    }catch{}
+  }
+
+  function syncSprintButton(){
+    const modeEl = document.getElementById("sprintMode");
+    if(!modeEl || !btnSprint) return;
+    const on = (modeEl.textContent || "").trim().toUpperCase() === "ON";
+    btnSprint.classList.toggle("on", on);
+    requestAnimationFrame(syncSprintButton);
+  }
+  requestAnimationFrame(syncSprintButton);
+
   if(btnSprint){
     btnSprint.addEventListener("click",(e)=>{
       e.preventDefault();
-      if(typeof sprintToggle === "boolean"){
-        sprintToggle = !sprintToggle;
-        btnSprint.classList.toggle("on", sprintToggle);
-        if(typeof updateSprintLabel === "function") updateSprintLabel();
-      }
+      if(typeof ensureAudio==="function") ensureAudio();
+      toggleSprintByShift();
     });
-    if(typeof sprintToggle === "boolean"){
-      btnSprint.classList.toggle("on", sprintToggle);
-    }
   }
 
-  // vibro
+  // Vibro
   function vib(ms=14){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch{} }
   if(btnPass) btnPass.addEventListener("pointerdown", ()=>vib(10));
   if(btnShot) btnShot.addEventListener("pointerdown", ()=>vib(12));
@@ -1406,4 +1418,4 @@
 
 })();
 </script>
-<!-- ===================== END PART 1.5/15 — MOBILE UX v3 ===================== -->
+<!-- ===================== END PART 1.5/15 — MOBILE UX v4 ===================== -->
