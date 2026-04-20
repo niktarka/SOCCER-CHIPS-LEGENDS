@@ -1130,178 +1130,226 @@
     try{ screenLoader.classList.add("hide"); setTimeout(showGame,520); }catch{}
   });
   </script>
-  <!-- ===================== PART 1.5/15 — MOBILE MODE (JOYSTICKS + BUTTONS + MOBILE HINTS) ===================== -->
-<style id="P1_5_MOBILE_STYLE">
-  /* Включается только если body.mobile-on */
+  <!-- ===================== PART 1.5/15 — MOBILE UX v2 (ONE STICK AIM + BIG BOTTOM BUTTONS) ===================== -->
+<style id="P1_5_MOBILE_V2_STYLE">
+  /* Включаем только на телефоне */
   body.mobile-on .touchUI{ display:block !important; }
   body.mobile-off .touchUI{ display:none !important; }
 
-  /* Чуть улучшаем расположение на телефоне */
-  body.mobile-on .joyBase{ width:170px !important; height:170px !important; left:14px !important; bottom:14px !important; }
-  body.mobile-on .aimBase{ width:170px !important; height:170px !important; right:14px !important; bottom:14px !important; }
-  body.mobile-on .joyKnob, body.mobile-on .aimKnob{ width:64px !important; height:64px !important; }
+  /* Убираем AIM-джойстик полностью */
+  body.mobile-on #aimBase{ display:none !important; }
 
-  body.mobile-on .touchBtns{ right:14px !important; top:14px !important; gap:10px !important; }
-  body.mobile-on .tbtn{ width:124px !important; border-radius:18px !important; }
+  /* Прячем подсказки на телефоне (они уже не нужны) */
+  body.mobile-on #hints{ display:none !important; }
 
-  /* Чтобы кнопки не мешали */
-  @media (max-width: 420px){
-    body.mobile-on .tbtn{ width:112px !important; padding:9px 10px !important; }
-    body.mobile-on .joyBase, body.mobile-on .aimBase{ width:160px !important; height:160px !important; }
+  /* Сжимаем окно тренера ТОЛЬКО на телефоне */
+  body.mobile-on .coach{
+    width: calc(100% - 20px) !important;
+    left: 10px !important;
+    bottom: 10px !important;
+    border-radius: 20px !important;
+  }
+  body.mobile-on .coach .textBox{
+    height: 64px !important;     /* было ~98 */
+    font-size: 12px !important;
+    padding: 8px 9px !important;
+  }
+  body.mobile-on .coachHd{
+    padding: 8px 10px !important;
+  }
+  body.mobile-on .btnRow{
+    gap: 8px !important;
+  }
+  body.mobile-on .btn{
+    padding: 9px 10px !important;
+    border-radius: 14px !important;
+  }
+
+  /* Джойстик движения делаем чуть крупнее и ниже */
+  body.mobile-on #joyBase{
+    width: 176px !important;
+    height: 176px !important;
+    left: 12px !important;
+    bottom: 12px !important;
+  }
+  body.mobile-on #joyKnob{
+    width: 68px !important;
+    height: 68px !important;
+  }
+
+  /* Кнопки: вниз справа, круги, крупнее */
+  body.mobile-on .touchBtns{
+    position: absolute !important;
+    right: 12px !important;
+    bottom: 12px !important;
+    top: auto !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px !important;
+    pointer-events: auto !important;
+  }
+
+  body.mobile-on .tbtn{
+    width: 78px !important;
+    height: 78px !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    font-size: 12px !important;
+    font-weight: 1200 !important;
+    letter-spacing: .2px !important;
+    box-shadow: 0 10px 0 rgba(21,19,26,.10) !important;
+  }
+  body.mobile-on .tbtn:active{
+    transform: translateY(8px) !important;
+    box-shadow: 0 4px 0 rgba(21,19,26,.10) !important;
+  }
+
+  /* Цветовые акценты кнопок */
+  body.mobile-on #btnTSprint{ background: rgba(60,255,143,.25) !important; border-color: rgba(60,255,143,.35) !important; }
+  body.mobile-on #btnTPass  { background: rgba(33,215,255,.22) !important; border-color: rgba(33,215,255,.30) !important; }
+  body.mobile-on #btnTShot  { background: rgba(255,45,160,.18) !important; border-color: rgba(255,45,160,.26) !important; }
+  body.mobile-on #btnTKick  { background: rgba(255,122,0,.20) !important; border-color: rgba(255,122,0,.30) !important; }
+
+  /* Немного меньше на очень маленьких экранах */
+  @media (max-width: 380px){
+    body.mobile-on #joyBase{ width: 164px !important; height: 164px !important; }
+    body.mobile-on .tbtn{ width: 72px !important; height: 72px !important; }
+    body.mobile-on .coach .textBox{ height: 58px !important; }
   }
 </style>
 
-<script id="P1_5_MOBILE_SCRIPT">
+<script id="P1_5_MOBILE_V2_SCRIPT">
 (() => {
   const $ = (s,r=document)=>r.querySelector(s);
 
-  // ---------- 1) Детект "телефон/планшет" ----------
-  // Считаем мобильным, если "coarse pointer" или touch
+  // 1) Детект телефона/планшета
   const isTouch = matchMedia("(pointer: coarse)").matches || ("ontouchstart" in window);
   document.body.classList.toggle("mobile-on", isTouch);
   document.body.classList.toggle("mobile-off", !isTouch);
+  if(!isTouch) return; // ПК не трогаем
 
-  // Если ПК — выходим, ничего не меняем
-  if(!isTouch) return;
+  // 2) Элементы
+  const joyBase = $("#joyBase");
+  const joyKnob = $("#joyKnob");
+  const btnSprint = $("#btnTSprint");
+  const btnPass = $("#btnTPass");
+  const btnShot = $("#btnTShot");
 
-  // ---------- 2) Найдём элементы мобильного UI из Part 1 ----------
-  const touchUI = $("#touchUI");
-  const joyBase = $("#joyBase"), joyKnob=$("#joyKnob");
-  const aimBase = $("#aimBase"), aimKnob=$("#aimKnob");
-  const btnPass = $("#btnTPass"), btnShot=$("#btnTShot"), btnSprint=$("#btnTSprint");
-
-  // Если вдруг чего-то нет — просто не ломаем игру
-  if(!touchUI || !joyBase || !aimBase || !joyKnob || !aimKnob){
-    console.warn("[P1.5] touch UI elements not found");
-    return;
+  // Добавим кнопку KICK, если её нет
+  const btnsWrap = document.querySelector(".touchBtns");
+  let btnKick = $("#btnTKick");
+  if(btnsWrap && !btnKick){
+    btnKick = document.createElement("button");
+    btnKick.className = "tbtn";
+    btnKick.id = "btnTKick";
+    btnKick.type = "button";
+    btnKick.textContent = "KICK";
+    btnsWrap.appendChild(btnKick);
   }
 
-  // ---------- 3) Подключаемся к твоим объектам/функциям из Part 1 ----------
-  // В твоей Part 1 уже есть:
-  //   joy.x / joy.y
-  //   aim.x / aim.y
-  //   sprintToggle (тумблер)
-  //   touchCharge("pass"/"shot", true/false)
-  //
-  // Мы аккуратно используем их, если они существуют.
-  const g = window;
-  const hasJoy = (typeof g.joy === "object");
-  const hasAim = (typeof g.aim === "object");
+  // 3) Проверим, что глобальные переменные из Part 1 доступны
+  // В обычном index.html (не module) они доступны по имени.
+  // joy и aim должны существовать; если нет — создадим совместимые.
+  if(typeof joy !== "object") window.joy = {x:0,y:0,active:false,id:null,cx:0,cy:0};
+  if(typeof aim !== "object") window.aim = {x:1,y:0,active:false,id:null,cx:0,cy:0};
 
-  // Если твоих объектов нет — создадим совместимые, чтобы основной код мог читать
-  if(!hasJoy) g.joy = {x:0,y:0,active:false,id:null,cx:0,cy:0};
-  if(!hasAim) g.aim = {x:1,y:0,active:false,id:null,cx:0,cy:0};
-
-  // Мертвая зона и сглаживание (делает управление реально удобнее)
+  // 4) Настройки управления пальцем (сделаем реально удобно)
   const CFG = {
-    maxR: 58,          // радиус
-    dead: 0.14,        // мёртвая зона
-    smooth: 0.18,      // сглаживание (0..1)
-    aimDead: 0.10,
+    maxR: 62,
+    dead: 0.16,      // мёртвая зона
+    smooth: 0.20,    // сглаживание
+    aimFromMoveDead: 0.22 // если движение сильнее этого — обновляем aim
   };
-  let joyTX=0, joyTY=0;  // целевые значения для сглаживания
-  let aimTX=1, aimTY=0;
+
+  let joyTX=0, joyTY=0; // целевые значения
+  let lastAimX=1, lastAimY=0; // последнее направление прицела
 
   function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
   function norm(x,y){
     const l = Math.hypot(x,y) || 1;
     return {x:x/l, y:y/l};
   }
-
-  function setKnob(knob, dx, dy, maxR){
+  function setKnob(dx, dy){
     const r = Math.hypot(dx,dy);
-    const k = r>maxR ? maxR/r : 1;
-    knob.style.transform = `translate(${dx*k}px, ${dy*k}px) translate(-50%,-50%)`;
+    const k = r>CFG.maxR ? CFG.maxR/r : 1;
+    joyKnob.style.transform = `translate(${dx*k}px, ${dy*k}px) translate(-50%,-50%)`;
   }
-
-  function applyDead(x,y,dead){
+  function applyDead(x,y){
     const r = Math.hypot(x,y);
-    if(r < dead) return {x:0,y:0};
-    const rr = (r-dead)/(1-dead);
+    if(r < CFG.dead) return {x:0,y:0};
+    const rr = (r-CFG.dead)/(1-CFG.dead);
     const n = norm(x,y);
     return {x:n.x*rr, y:n.y*rr};
   }
 
-  // ---------- 4) Левый джойстик (движение) ----------
+  // 5) Один джойстик = движение + прицел
   joyBase.addEventListener("pointerdown",(e)=>{
-    g.ensureAudio && g.ensureAudio(); // если есть
-    g.joy.active = true;
-    g.joy.id = e.pointerId;
-    const r = joyBase.getBoundingClientRect();
-    g.joy.cx = r.left + r.width/2;
-    g.joy.cy = r.top + r.height/2;
+    if(typeof ensureAudio === "function") ensureAudio();
+    joy.active=true;
+    joy.id=e.pointerId;
+    const r=joyBase.getBoundingClientRect();
+    joy.cx=r.left+r.width/2;
+    joy.cy=r.top+r.height/2;
     joyBase.setPointerCapture(e.pointerId);
-  });
+  }, {passive:false});
 
   joyBase.addEventListener("pointermove",(e)=>{
-    if(!g.joy.active || e.pointerId !== g.joy.id) return;
-    const dx = e.clientX - g.joy.cx;
-    const dy = e.clientY - g.joy.cy;
-    setKnob(joyKnob, dx, dy, CFG.maxR);
+    if(!joy.active || e.pointerId!==joy.id) return;
+    e.preventDefault();
 
-    let x = clamp(dx/CFG.maxR, -1, 1);
-    let y = clamp(dy/CFG.maxR, -1, 1);
-    const d = applyDead(x,y,CFG.dead);
-    joyTX = d.x; joyTY = d.y;
-  });
+    const dx=e.clientX-joy.cx;
+    const dy=e.clientY-joy.cy;
+    setKnob(dx,dy);
+
+    let x = clamp(dx/CFG.maxR,-1,1);
+    let y = clamp(dy/CFG.maxR,-1,1);
+    const d = applyDead(x,y);
+
+    joyTX=d.x; joyTY=d.y;
+
+    // Если игрок реально двигает джойстик — обновляем направление прицела
+    const mag = Math.hypot(d.x,d.y);
+    if(mag > CFG.aimFromMoveDead){
+      const n = norm(d.x,d.y);
+      lastAimX=n.x; lastAimY=n.y;
+    }
+  }, {passive:false});
 
   function joyUp(e){
-    if(e.pointerId !== g.joy.id) return;
-    g.joy.active = false;
-    g.joy.id = null;
+    if(e.pointerId!==joy.id) return;
+    joy.active=false;
+    joy.id=null;
     joyTX=0; joyTY=0;
-    joyKnob.style.transform = "translate(-50%,-50%)";
+    joyKnob.style.transform="translate(-50%,-50%)";
+    // прицел НЕ сбрасываем — остаётся lastAim
   }
-  joyBase.addEventListener("pointerup", joyUp);
-  joyBase.addEventListener("pointercancel", joyUp);
+  joyBase.addEventListener("pointerup", joyUp, {passive:false});
+  joyBase.addEventListener("pointercancel", joyUp, {passive:false});
 
-  // ---------- 5) Правый джойстик (прицел) ----------
-  aimBase.addEventListener("pointerdown",(e)=>{
-    g.ensureAudio && g.ensureAudio();
-    g.aim.active = true;
-    g.aim.id = e.pointerId;
-    const r = aimBase.getBoundingClientRect();
-    g.aim.cx = r.left + r.width/2;
-    g.aim.cy = r.top + r.height/2;
-    aimBase.setPointerCapture(e.pointerId);
-  });
+  // 6) Сглаживание (мягче, удобнее)
+  function smoothLoop(){
+    joy.x = joy.x + (joyTX - joy.x)*CFG.smooth;
+    joy.y = joy.y + (joyTY - joy.y)*CFG.smooth;
 
-  aimBase.addEventListener("pointermove",(e)=>{
-    if(!g.aim.active || e.pointerId !== g.aim.id) return;
-    const dx = e.clientX - g.aim.cx;
-    const dy = e.clientY - g.aim.cy;
-    setKnob(aimKnob, dx, dy, CFG.maxR);
+    // aim всегда последнее направление движения (удобно)
+    aim.x = aim.x + (lastAimX - aim.x)*0.25;
+    aim.y = aim.y + (lastAimY - aim.y)*0.25;
 
-    let x = clamp(dx/CFG.maxR, -1, 1);
-    let y = clamp(dy/CFG.maxR, -1, 1);
-
-    // deadzone для прицела, но если вышли — нормализуем
-    if(Math.hypot(x,y) < CFG.aimDead){
-      return;
-    }
-    const n = norm(x,y);
-    aimTX = n.x; aimTY = n.y;
-  });
-
-  function aimUp(e){
-    if(e.pointerId !== g.aim.id) return;
-    g.aim.active = false;
-    g.aim.id = null;
-    aimKnob.style.transform = "translate(-50%,-50%)";
-    // прицел не обнуляем — оставляем последнее направление (удобнее)
+    requestAnimationFrame(smoothLoop);
   }
-  aimBase.addEventListener("pointerup", aimUp);
-  aimBase.addEventListener("pointercancel", aimUp);
+  requestAnimationFrame(smoothLoop);
 
-  // ---------- 6) Кнопки PASS / SHOT (удержание = заряд) ----------
+  // 7) Кнопки PASS/SHOT — удержание = заряд (используем твою touchCharge)
   function callTouchCharge(type, down){
-    if(typeof g.touchCharge === "function"){
-      g.touchCharge(type, down);
+    if(typeof touchCharge === "function"){
+      touchCharge(type, down);
       return;
     }
-    // fallback: если у тебя нет touchCharge, то просто делаем лёгкий удар
-    if(down === false && typeof g.kick === "function"){
-      g.kick(type==="pass" ? 280 : 380);
+    // если вдруг нет — fallback (не должно случиться)
+    if(typeof kick === "function" && down===false){
+      kick(type==="pass"? 280 : 380);
     }
   }
 
@@ -1310,66 +1358,54 @@
     btnPass.addEventListener("pointerup",(e)=>{ e.preventDefault(); callTouchCharge("pass", false); btnPass.classList.remove("on"); }, {passive:false});
     btnPass.addEventListener("pointercancel",(e)=>{ e.preventDefault(); callTouchCharge("pass", false); btnPass.classList.remove("on"); }, {passive:false});
   }
+
   if(btnShot){
     btnShot.addEventListener("pointerdown",(e)=>{ e.preventDefault(); callTouchCharge("shot", true); btnShot.classList.add("on"); }, {passive:false});
     btnShot.addEventListener("pointerup",(e)=>{ e.preventDefault(); callTouchCharge("shot", false); btnShot.classList.remove("on"); }, {passive:false});
     btnShot.addEventListener("pointercancel",(e)=>{ e.preventDefault(); callTouchCharge("shot", false); btnShot.classList.remove("on"); }, {passive:false});
   }
 
-  // ---------- 7) Sprint тумблер на телефоне ----------
-  // В твоей Part 1 спринт = sprintToggle (global) и updateSprintLabel()
-  if(btnSprint){
-    btnSprint.addEventListener("click", (e)=>{
+  // 8) Кнопка KICK — лёгкий пинок (аналог Space)
+  if(btnKick){
+    btnKick.addEventListener("click",(e)=>{
       e.preventDefault();
-      if(typeof g.sprintToggle === "boolean"){
-        g.sprintToggle = !g.sprintToggle;
-        btnSprint.classList.toggle("on", g.sprintToggle);
-        if(typeof g.updateSprintLabel === "function") g.updateSprintLabel();
+      // предпочтительно использовать твою функцию kick(lightKick), если доступна
+      if(typeof kick === "function" && typeof PHYS === "object" && PHYS.lightKick){
+        kick(PHYS.lightKick);
+      } else {
+        // fallback: имитируем Space (если у тебя обработчик смотрит down["Space"])
+        try{
+          down["Space"]=true;
+          // если есть handleSpace — дернём
+          if(typeof handleSpace === "function") handleSpace();
+          down["Space"]=false;
+        }catch{}
       }
     });
-    // синхронизируем состояние
-    if(typeof g.sprintToggle === "boolean"){
-      btnSprint.classList.toggle("on", g.sprintToggle);
+  }
+
+  // 9) Sprint как тумблер (как ты хотела)
+  if(btnSprint){
+    btnSprint.addEventListener("click",(e)=>{
+      e.preventDefault();
+      if(typeof sprintToggle === "boolean"){
+        sprintToggle = !sprintToggle;
+        btnSprint.classList.toggle("on", sprintToggle);
+        if(typeof updateSprintLabel === "function") updateSprintLabel();
+      }
+    });
+    if(typeof sprintToggle === "boolean"){
+      btnSprint.classList.toggle("on", sprintToggle);
     }
   }
 
-  // ---------- 8) Мобильные подсказки (заменяем текст только на телефоне) ----------
-  const hintsBody = $("#hintsBody");
-  if(hintsBody){
-    // заменяем подсказки на кнопки
-    hintsBody.innerHTML = `
-      <div class="hRow"><span>Движение</span><span class="kbd">JOY</span></div>
-      <div class="hRow"><span>Спринт</span><span class="kbd">SPRINT</span></div>
-      <div class="hRow"><span>Пас</span><span class="kbd">PASS</span></div>
-      <div class="hRow"><span>Удар</span><span class="kbd">SHOT</span></div>
-      <div class="hRow"><span>Прицел</span><span class="kbd">AIM</span></div>
-    `;
-  }
-
-  // ---------- 9) Сглаживание значений (делает управление реально удобным) ----------
-  // Мы плавно приводим g.joy.x/y и g.aim.x/y к целевым
-  // Это не ломает ПК, потому что на ПК этот код не запускается.
-  function smoothStep(){
-    // joy smoothing
-    g.joy.x = g.joy.x + (joyTX - g.joy.x)*CFG.smooth;
-    g.joy.y = g.joy.y + (joyTY - g.joy.y)*CFG.smooth;
-
-    // aim smoothing (чуть слабее)
-    g.aim.x = g.aim.x + (aimTX - g.aim.x)*0.12;
-    g.aim.y = g.aim.y + (aimTY - g.aim.y)*0.12;
-
-    requestAnimationFrame(smoothStep);
-  }
-  requestAnimationFrame(smoothStep);
-
-  // ---------- 10) Мелкая вибро‑фича (если доступно) ----------
-  function vib(ms=20){
-    try{ if(navigator.vibrate) navigator.vibrate(ms); }catch{}
-  }
+  // 10) Микро-вибрация (приятно)
+  function vib(ms=14){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch{} }
   if(btnPass) btnPass.addEventListener("pointerdown", ()=>vib(10));
   if(btnShot) btnShot.addEventListener("pointerdown", ()=>vib(12));
+  if(btnKick) btnKick.addEventListener("click", ()=>vib(8));
   if(btnSprint) btnSprint.addEventListener("click", ()=>vib(8));
 
 })();
 </script>
-<!-- ===================== END PART 1.5/15 ===================== -->
+<!-- ===================== END PART 1.5/15 — MOBILE UX v2 ===================== -->
