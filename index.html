@@ -4589,3 +4589,101 @@
 })();
 </script>
 <!-- ===================== END PART 3.6/15 =================
+<!-- ===================== PART 3.7/15 — MOBILE SCROLL FOR SETTINGS + TRAINING OVERLAYS ===================== -->
+<style id="SC_P37_SCROLL_STYLE">
+  /* Только тач (телефоны/планшеты) */
+  @media (pointer: coarse) and (hover: none){
+
+    /* 1) Настройки: скролл внутри карточки */
+    #m2Settings.on{
+      overflow: hidden !important; /* чтобы скролл был внутри карточки, а не по фону */
+    }
+    #m2Settings.on .m2Card{
+      max-height: calc(100vh - 24px) !important;
+      overflow: auto !important;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+    }
+
+    /* если внутри есть отдельное тело — делаем его скроллируемым */
+    #m2Settings.on .m2Bd{
+      overflow: visible !important;
+    }
+
+    /* 2) Training Hub: скролл внутри карточки */
+    #scTrainHub3.on,
+    #scTrain3.on{
+      overflow: hidden !important;
+    }
+
+    #scTrainHub3.on .th3Card,
+    #scTrainHub3.on .t3Card,
+    #scTrain3.on .t3Card,
+    #scTrain3.on .th3Card{
+      max-height: calc(100vh - 24px) !important;
+      overflow: auto !important;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+    }
+
+    /* если есть body внутри карточки — тоже разрешим нормальную прокрутку */
+    #scTrainHub3.on .th3Bd,
+    #scTrainHub3.on .t3Bd,
+    #scTrain3.on .t3Bd,
+    #scTrain3.on .th3Bd{
+      overflow: visible !important;
+    }
+  }
+</style>
+
+<script id="SC_P37_SCROLL_SCRIPT">
+(() => {
+  // Ничего сложного — просто страховка от случаев, когда кто-то запрещает scroll/touchmove.
+  const isTouch = matchMedia("(pointer: coarse)").matches && matchMedia("(hover: none)").matches;
+  if(!isTouch) return;
+
+  function allowScrollIn(el){
+    if(!el) return;
+
+    // Разрешаем прокрутку внутри элемента (и не даём “гаситься” событиям)
+    const handler = (e) => {
+      // НЕ preventDefault — иначе скролл перестанет работать
+      e.stopPropagation();
+    };
+
+    // Вешаем один раз
+    if(el.__p37Scroll) return;
+    el.__p37Scroll = true;
+
+    el.addEventListener("touchmove", handler, { passive: true });
+    el.addEventListener("pointermove", handler, { passive: true });
+  }
+
+  // Настройки
+  const settingsCard = document.querySelector("#m2Settings .m2Card");
+  allowScrollIn(settingsCard);
+
+  // Тренировка
+  const trainCard =
+    document.querySelector("#scTrainHub3 .th3Card") ||
+    document.querySelector("#scTrainHub3 .t3Card") ||
+    document.querySelector("#scTrain3 .t3Card") ||
+    document.querySelector("#scTrain3 .th3Card");
+
+  allowScrollIn(trainCard);
+
+  // Если карточки появляются позже — подцепим
+  setInterval(() => {
+    allowScrollIn(document.querySelector("#m2Settings .m2Card"));
+    allowScrollIn(
+      document.querySelector("#scTrainHub3 .th3Card") ||
+      document.querySelector("#scTrainHub3 .t3Card") ||
+      document.querySelector("#scTrain3 .t3Card") ||
+      document.querySelector("#scTrain3 .th3Card")
+    );
+  }, 800);
+})();
+</script>
+<!-- ===================== END PART 3.7/15 — MOBILE SCROLL ===================== -->
