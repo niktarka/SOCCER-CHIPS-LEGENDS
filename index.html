@@ -4461,129 +4461,131 @@
 })();
 </script>
 <!-- ===================== END PART 3.5/15 — CANVAS ZOOM ONLY ===================== -->
-<!-- ===================== PART 3.6/15 — MOBILE MENU ZOOM OUT (STRONG FIT) ===================== -->
-<style id="SC_P36_STRONG_MENU_STYLE">
+<!-- ===================== PART 3.6/15 — MOBILE FIT ONLY FOR SETTINGS + TRAINING (NOT MAIN MENU) ===================== -->
+<style id="SC_P36_ONLY_OVERLAYS_STYLE">
   :root{
-    --scMenuScale36: 1;
+    --scOverlayScale36: 1;
   }
 
-  /* Только на телефонах/тач-устройствах */
+  /* Только на телефонах/тач */
   @media (pointer: coarse) and (hover: none){
-    /* Главное меню */
-    #scMenu2.on{
-      transform: scale(var(--scMenuScale36)) !important;
-      transform-origin: center top !important;
-    }
 
-    /* Окно настроек */
-    #m2Settings.on{
-      transform: scale(var(--scMenuScale36)) !important;
+    /* ✅ Настройки: уменьшаем ТОЛЬКО карточку, не весь фон */
+    #m2Settings.on .m2Card{
+      transform: scale(var(--scOverlayScale36)) !important;
       transform-origin: center center !important;
     }
 
-    /* Если вдруг какой-то контент всё равно длинный — пусть будет скролл внутри */
-    #scMenu2.on{
-      overflow: auto !important;
+    /* ✅ Training Hub (у тебя может быть .th3Card или .t3Card в разных версиях) */
+    #scTrainHub3.on .th3Card,
+    #scTrain3.on .t3Card{
+      transform: scale(var(--scOverlayScale36)) !important;
+      transform-origin: center center !important;
+    }
+
+    /* На всякий случай: если у тренировок другой класс карточки */
+    #scTrainHub3.on .t3Card,
+    #scTrain3.on .th3Card{
+      transform: scale(var(--scOverlayScale36)) !important;
+      transform-origin: center center !important;
     }
   }
 </style>
 
-<script id="SC_P36_STRONG_MENU_SCRIPT">
+<script id="SC_P36_ONLY_OVERLAYS_SCRIPT">
 (() => {
   const isTouch = matchMedia("(pointer: coarse)").matches && matchMedia("(hover: none)").matches;
   if(!isTouch) return;
 
-  const menu = document.getElementById("scMenu2");
   const settings = document.getElementById("m2Settings");
-  if(!menu && !settings) return;
+  const trainHub  = document.getElementById("scTrainHub3");
+  const trainAlt  = document.getElementById("scTrain3");
 
-  // ✅ СИЛЬНО отдаляем меню по умолчанию
-  const BASE = 0.78;   // было 0.88, теперь заметно меньше
-  const MIN  = 0.62;   // нижний предел, чтобы не превратилось в микротекст
-  const STEP = 0.04;   // шаг автоподбора
-  const PAD  = 14;     // “воздух” вокруг
+  // если вообще нет нужных окон — тихо выходим
+  if(!settings && !trainHub && !trainAlt) return;
+
+  const BASE = 0.84;   // “чуть отдалённая” по умолчанию
+  const MIN  = 0.64;   // нижняя граница, чтобы не было слишком мелко
+  const STEP = 0.04;   // шаг подбора
+  const PAD  = 14;     // запас по краям
 
   function setScale(v){
-    document.documentElement.style.setProperty("--scMenuScale36", String(v));
+    document.documentElement.style.setProperty("--scOverlayScale36", String(v));
   }
 
-  function isMenuOpen(){ return menu && menu.classList.contains("on"); }
-  function isSettingsOpen(){ return settings && settings.classList.contains("on"); }
-
-  function getMenuContent(){
-    // В твоём меню основная раскладка в .m2Wrap
-    return menu ? (menu.querySelector(".m2Wrap") || menu) : null;
-  }
-  function getSettingsContent(){
-    // В настройках основная карточка .m2Card
-    return settings ? (settings.querySelector(".m2Card") || settings) : null;
+  function isOn(el){
+    return !!(el && el.classList && el.classList.contains("on"));
   }
 
-  function fitContent(contentEl){
-    if(!contentEl) return;
+  function pickActiveCard(){
+    // 1) настройки
+    if(isOn(settings)){
+      return settings.querySelector(".m2Card") || null;
+    }
 
-    // стартуем с сильного BASE
+    // 2) training hub (новый)
+    if(isOn(trainHub)){
+      return trainHub.querySelector(".th3Card") || trainHub.querySelector(".t3Card") || null;
+    }
+
+    // 3) training (если другая версия)
+    if(isOn(trainAlt)){
+      return trainAlt.querySelector(".t3Card") || trainAlt.querySelector(".th3Card") || null;
+    }
+
+    return null;
+  }
+
+  function fitActive(){
+    const card = pickActiveCard();
+
+    // если ничего не открыто — возвращаем 1
+    if(!card){
+      setScale(1);
+      return;
+    }
+
+    // стартуем с базового уменьшения
     let s = BASE;
     setScale(s);
 
-    // ждём применения масштаба
-    // (2 кадра — надёжнее на мобилках)
+    // ждём применения transform (на мобилках это важно)
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        for(let i=0;i<12;i++){
-          const rect = contentEl.getBoundingClientRect();
+        for(let i=0;i<14;i++){
+          const rect = card.getBoundingClientRect();
           const maxH = window.innerHeight - PAD*2;
 
           if(rect.height <= maxH) break; // всё влезло
 
           s = Math.max(MIN, s - STEP);
           setScale(s);
-
           if(s <= MIN) break;
         }
       });
     });
   }
 
-  function fitNow(){
-    // если ничего не открыто — вернём 1
-    if(!isMenuOpen() && !isSettingsOpen()){
-      setScale(1);
-      return;
-    }
-
-    if(isSettingsOpen()){
-      fitContent(getSettingsContent());
-      return;
-    }
-
-    if(isMenuOpen()){
-      fitContent(getMenuContent());
-      return;
-    }
-  }
-
-  // Отслеживаем открытие/закрытие (быстро и стабильно)
+  // отслеживание открытия/закрытия (без вмешательства в твой код)
   let last = "";
   setInterval(() => {
-    const state = (isMenuOpen() ? "menu" : "") + "|" + (isSettingsOpen() ? "settings" : "");
+    const state = `${isOn(settings)}|${isOn(trainHub)}|${isOn(trainAlt)}`;
     if(state !== last){
       last = state;
-      // чуть подождём на анимации
-      setTimeout(fitNow, 60);
-      setTimeout(fitNow, 220);
-      setTimeout(fitNow, 520);
+      setTimeout(fitActive, 60);
+      setTimeout(fitActive, 220);
+      setTimeout(fitActive, 520);
     }
   }, 120);
 
-  // При повороте экрана тоже пересчитать
+  // при повороте/resize тоже пересчёт
   window.addEventListener("resize", () => {
-    setTimeout(fitNow, 60);
-    setTimeout(fitNow, 220);
+    setTimeout(fitActive, 80);
+    setTimeout(fitActive, 250);
   }, {passive:true});
 
   // старт
-  setTimeout(fitNow, 220);
+  setTimeout(fitActive, 250);
 })();
 </script>
-<!-- ===================== END PART 3.6/15 — MOBILE MENU ZOOM OUT (STRONG FIT) ===================== -->
+<!-- ===================== END PART 3.6/15 =================
