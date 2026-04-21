@@ -3551,3 +3551,101 @@
 })();
 </script>
 <!-- ===================== END PART 3.2/15 — ZOOM BUTTONS ===================== -->
+<!-- ===================== PART 3.3/15 — MOBILE UI ZOOM (MENUS + BUTTONS FOLLOW GAME ZOOM) ===================== -->
+<style id="SC_P33_UI_ZOOM_STYLE">
+  :root{ --scUIZoom33: 1; }
+
+  /* Включаем UI-zoom только на телефоне (coarse + no hover) */
+  @media (pointer: coarse) and (hover: none){
+    /* Панель FULL/ZOOM (наша) */
+    #fsPanel31{
+      transform: scale(var(--scUIZoom33));
+      transform-origin: top right;
+    }
+
+    /* Touch UI (твои мобильные кнопки) */
+    #touchUI{
+      transform: scale(var(--scUIZoom33));
+      transform-origin: bottom left;
+    }
+
+    /* Если у тебя есть отдельные блоки внутри touchUI — подстрахуем */
+    .touchBtns, .joy, .tbtn{
+      transform-origin: bottom left;
+    }
+
+    /* Меню и модалки (главное меню, настройки, тренировка-хаб и т.д.) —
+       масштабируем от центра, чтобы не “съезжало” */
+    #scMenu2,
+    #m2Settings,
+    #scTrainHub3,
+    #scTrain3,
+    #trainHUD3,
+    #matchHUD4,
+    #matchHUD4F,
+    #qm4Wizard,
+    #qm4v3Wizard,
+    #qm4Final,
+    #qm32Overlay,
+    #qm35Overlay,
+    #qm35Re,
+    #scQmMega,
+    #scQmOne{
+      transform: scale(var(--scUIZoom33));
+      transform-origin: center center;
+    }
+  }
+</style>
+
+<script id="SC_P33_UI_ZOOM_SCRIPT">
+(() => {
+  // Только телефон/планшет с touch (как ты просил — для телефона важно)
+  const isTouchPhone = matchMedia("(pointer: coarse)").matches && matchMedia("(hover: none)").matches;
+
+  if(!isTouchPhone) return; // ПК не трогаем
+
+  // Читаем зум из Part 3.2 (CSS переменная или localStorage)
+  function readZoom(){
+    // 1) пробуем взять из CSS переменной --scZoom32
+    const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--scZoom32"));
+    if(Number.isFinite(z) && z > 0) return z;
+
+    // 2) fallback: localStorage
+    try{
+      const s = localStorage.getItem("sc_zoom_32");
+      const v = parseFloat(s);
+      if(Number.isFinite(v) && v > 0) return v;
+    }catch{}
+
+    return 1;
+  }
+
+  function setUiZoom(z){
+    // лимиты (чтобы UI не стал огромным/крошечным)
+    const Z_MIN = 0.75;
+    const Z_MAX = 1.60;
+    const zz = Math.max(Z_MIN, Math.min(Z_MAX, z));
+    document.documentElement.style.setProperty("--scUIZoom33", String(zz));
+  }
+
+  // Синхронизация: когда меняется зум игры — меняем UI.
+  // Самый стабильный способ без правок Part 3.2 — короткий polling.
+  let last = -1;
+  setInterval(() => {
+    const z = readZoom();
+    if(Math.abs(z - last) > 0.001){
+      last = z;
+      setUiZoom(z);
+
+      // если ты в псевдо-фуллскрине — иногда iOS любит пересчитывать лэйаут
+      // пинок resize помогает UI заново встать красиво
+      setTimeout(()=>window.dispatchEvent(new Event("resize")), 0);
+    }
+  }, 120);
+
+  // Первичная установка
+  setUiZoom(readZoom());
+
+})();
+</script>
+<!-- ===================== END PART 3.3/15 — MOBILE UI ZOOM ===================== -->
