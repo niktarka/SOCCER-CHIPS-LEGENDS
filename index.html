@@ -4165,3 +4165,163 @@
 </script>
 <!-- ===================== END PART 3.3/15 ===================== -->
 ``
+<!-- ===================== PART 3.4/15 — FIX MOBILE ACTION BUTTONS SCALE + KEEP IN VIEW ===================== -->
+<style id="SC_P34_STYLE">
+  /* 1) Снимаем прошлый общий масштаб с #touchUI (чтобы правые кнопки не улетали) */
+  #touchUI{
+    transform: none !important;
+  }
+
+  /* 2) Вводим отдельные масштабы для джойстика и кнопок */
+  :root{
+    --scJoyScale34: 1.0;
+    --scBtnScale34: 1.0;
+    --scBtnFixX34: 0px;
+    --scBtnFixY34: 0px;
+  }
+
+  /* 3) Джойстик — масштаб от нижнего левого */
+  #touchUI .joy,
+  #touchUI .joystick,
+  #touchUI .joyWrap,
+  #touchUI .joyArea{
+    transform: scale(var(--scJoyScale34)) !important;
+    transform-origin: bottom left !important;
+  }
+
+  /* 4) Кнопки (ромб PASS/SHOT/KICK/TACKLE/SPR/…) — масштаб от нижнего правого + авто-сдвиг в экран */
+  #touchUI .touchBtns,
+  #touchUI .btns,
+  #touchUI .buttons{
+    transform: translate(var(--scBtnFixX34), var(--scBtnFixY34)) scale(var(--scBtnScale34)) !important;
+    transform-origin: bottom right !important;
+    will-change: transform;
+  }
+
+  /* 5) На всякий: сами кнопки чуть жирнее/крупнее */
+  #touchUI .touchBtns button,
+  #touchUI .touchBtns .tbtn,
+  #touchUI .btns button,
+  #touchUI .btns .tbtn{
+    font-size: 14px !important;
+    font-weight: 1200 !important;
+  }
+
+  /* 6) Если у тебя кнопки по id — тоже на всякий случай */
+  #btnTSprint, #btnTPass, #btnTShot, #btnTKick, #btnTTackle{
+    font-size: 14px !important;
+    font-weight: 1200 !important;
+  }
+
+  /* 7) ПК не трогаем (если touchUI вдруг показывается) */
+  @media (pointer: fine){
+    #touchUI .touchBtns, #touchUI .btns, #touchUI .buttons{
+      transform: none !important;
+    }
+    #touchUI .joy, #touchUI .joystick, #touchUI .joyWrap, #touchUI .joyArea{
+      transform: none !important;
+    }
+  }
+</style>
+
+<script id="SC_P34_SCRIPT">
+(() => {
+  // ---- определяем zoom игры (используем твоё хранилище/переменные)
+  function readZoom(){
+    // 1) из sc_zoom_global (если ты ставил мой глобальный зум)
+    try{
+      const z = parseFloat(localStorage.getItem("sc_zoom_global"));
+      if(Number.isFinite(z) && z>0) return z;
+    }catch{}
+    // 2) из sc_zoom_32 (старый вариант)
+    try{
+      const z = parseFloat(localStorage.getItem("sc_zoom_32"));
+      if(Number.isFinite(z) && z>0) return z;
+    }catch{}
+    // 3) из CSS-переменных
+    const css1 = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--scZoom32"));
+    if(Number.isFinite(css1) && css1>0) return css1;
+    const css2 = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--scZoom"));
+    if(Number.isFinite(css2) && css2>0) return css2;
+
+    return 1;
+  }
+
+  // ---- только для touch-устройств (телефон/планшет)
+  const isTouch = matchMedia("(pointer: coarse)").matches && matchMedia("(hover: none)").matches;
+  if(!isTouch) return;
+
+  function applyScales(){
+    // делаем кнопки чуть БОЛЬШЕ, чем джойстик, чтобы реально удобно
+    const z = readZoom();
+
+    // базовый множитель на мобильных (можешь поменять 1.25 на 1.35 если хочешь ещё крупнее)
+    const base = 1.25;
+
+    // джойстик
+    const joy = Math.max(0.85, Math.min(1.70, z * base));
+
+    // кнопки (чуть больше)
+    const btn = Math.max(0.90, Math.min(1.85, z * (base + 0.10)));
+
+    document.documentElement.style.setProperty("--scJoyScale34", String(joy));
+    document.documentElement.style.setProperty("--scBtnScale34", String(btn));
+
+    // после масштаба — поджимаем ромб кнопок в экран
+    setTimeout(fitButtonsIntoScreen, 0);
+  }
+
+  function fitButtonsIntoScreen(){
+    const wrap =
+      document.querySelector("#touchUI .touchBtns") ||
+      document.querySelector("#touchUI .btns") ||
+      document.querySelector("#touchUI .buttons") ||
+      document.querySelector(".touchBtns");
+
+    if(!wrap) return;
+
+    // обнулим фикс перед замером
+    document.documentElement.style.setProperty("--scBtnFixX34", "0px");
+    document.documentElement.style.setProperty("--scBtnFixY34", "0px");
+
+    // даём браузеру применить transform
+    requestAnimationFrame(() => {
+      const r = wrap.getBoundingClientRect();
+      const pad = 8;
+
+      let dx = 0;
+      let dy = 0;
+
+      if(r.right > innerWidth - pad) dx -= (r.right - (innerWidth - pad));
+      if(r.left  < pad)            dx += (pad - r.left);
+
+      if(r.bottom > innerHeight - pad) dy -= (r.bottom - (innerHeight - pad));
+      if(r.top    < pad)              dy += (pad - r.top);
+
+      document.documentElement.style.setProperty("--scBtnFixX34", dx.toFixed(0) + "px");
+      document.documentElement.style.setProperty("--scBtnFixY34", dy.toFixed(0) + "px");
+    });
+  }
+
+  // ---- следим за изменением zoom (вдруг ты меняешь кнопками +/-)
+  let last = -1;
+  setInterval(() => {
+    const z = readZoom();
+    if(Math.abs(z - last) > 0.001){
+      last = z;
+      applyScales();
+    }
+  }, 150);
+
+  // ---- на поворот экрана / resize тоже поджимать
+  window.addEventListener("resize", () => {
+    applyScales();
+    setTimeout(fitButtonsIntoScreen, 50);
+  }, {passive:true});
+
+  // старт
+  applyScales();
+
+})();
+</script>
+<!-- ===================== END PART 3.4/15 ===================== -->
