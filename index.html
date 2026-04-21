@@ -3254,3 +3254,164 @@
 })();
 </script>
 <!-- ===================== END PART 3/15 — TRAINING HUB REWORK v2 ===================== -->
+<!-- ===================== PART 3.1/15 — FULLSCREEN BUTTON (PC + MOBILE) ===================== -->
+<style id="SC_P31_FULLSCREEN_STYLE">
+  #fsBtn31{
+    position: fixed;
+    right: 12px;
+    top: 12px;
+    z-index: 2147483647;
+    border: none;
+    cursor: pointer;
+    padding: 10px 12px;
+    border-radius: 16px;
+    background: rgba(255,255,255,.78);
+    border: 1px solid rgba(21,19,26,.12);
+    box-shadow: 0 14px 36px rgba(21,19,26,.12);
+    backdrop-filter: blur(12px);
+    font-weight: 1200;
+    color: rgba(21,19,26,.86);
+    user-select: none;
+  }
+  #fsBtn31:active{
+    transform: translateY(6px);
+  }
+
+  /* Псевдо-фуллскрин (для iPhone Safari и любых случаев, когда Fullscreen API недоступен) */
+  body.pseudo-fs31{
+    overflow: hidden !important;
+    touch-action: none;
+  }
+  body.pseudo-fs31 #gameCanvas{
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 2147483000 !important;
+  }
+
+  /* Чтобы кнопка была поверх канваса */
+  body.pseudo-fs31 #fsBtn31{
+    z-index: 2147483647 !important;
+  }
+</style>
+
+<button id="fsBtn31" type="button">⛶ FULL</button>
+
+<script id="SC_P31_FULLSCREEN_SCRIPT">
+(() => {
+  const btn = document.getElementById("fsBtn31");
+  const canvas = document.getElementById("gameCanvas");
+  const root = document.documentElement;
+
+  // Определяем “в настоящем fullscreen”
+  function isNativeFs(){
+    return !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+
+  // Определяем “в псевдо fullscreen”
+  function isPseudoFs(){
+    return document.body.classList.contains("pseudo-fs31");
+  }
+
+  // Обновить текст кнопки
+  function syncBtn(){
+    if(isNativeFs() || isPseudoFs()){
+      btn.textContent = "✕ EXIT";
+    } else {
+      btn.textContent = "⛶ FULL";
+    }
+  }
+
+  // Попытка включить настоящий fullscreen
+  async function requestNativeFullscreen(){
+    // Лучше всего фуллскринить <html>, так меньше багов с размерами
+    const el = root;
+
+    try{
+      if(el.requestFullscreen){
+        await el.requestFullscreen({ navigationUI: "hide" });
+        return true;
+      }
+      // Safari / старые
+      if(el.webkitRequestFullscreen){
+        el.webkitRequestFullscreen(); // без await
+        return true;
+      }
+    }catch(e){
+      // игнор — уйдём в псевдо
+    }
+    return false;
+  }
+
+  // Выход из настоящего fullscreen
+  async function exitNativeFullscreen(){
+    try{
+      if(document.exitFullscreen){
+        await document.exitFullscreen();
+        return true;
+      }
+      if(document.webkitExitFullscreen){
+        document.webkitExitFullscreen();
+        return true;
+      }
+    }catch(e){}
+    return false;
+  }
+
+  // Псевдо fullscreen (для iPhone Safari и любых отказов)
+  function enterPseudoFullscreen(){
+    document.body.classList.add("pseudo-fs31");
+    // попытка спрятать адресную строку на мобилках
+    setTimeout(() => window.scrollTo(0,1), 0);
+
+    // дать игре пересчитать размеры
+    window.dispatchEvent(new Event("resize"));
+    syncBtn();
+  }
+
+  function exitPseudoFullscreen(){
+    document.body.classList.remove("pseudo-fs31");
+    window.dispatchEvent(new Event("resize"));
+    syncBtn();
+  }
+
+  // Главная кнопка
+  btn.addEventListener("click", async (e) => {
+    e.preventDefault();
+
+    // Если мы уже в каком-то fullscreen — выходим
+    if(isNativeFs()){
+      await exitNativeFullscreen();
+      syncBtn();
+      return;
+    }
+    if(isPseudoFs()){
+      exitPseudoFullscreen();
+      return;
+    }
+
+    // Иначе пробуем настоящий fullscreen
+    const ok = await requestNativeFullscreen();
+
+    // Если не получилось — делаем псевдо
+    if(!ok){
+      enterPseudoFullscreen();
+    } else {
+      // чуть подождём, чтобы браузер успел переключиться
+      setTimeout(() => {
+        window.dispatchEvent(new Event("resize"));
+        syncBtn();
+      }, 80);
+    }
+  }, { passive: false });
+
+  // Синхронизация при выходе через ESC / системные жесты
+  document.addEventListener("fullscreenchange", syncBtn);
+  document.addEventListener("webkitfullscreenchange", syncBtn);
+
+  // Стартовая синхронизация
+  syncBtn();
+})();
+</script>
+<!-- ===================== END PART 3.1/15 — FULLSCREEN BUTTON ===================== -->
