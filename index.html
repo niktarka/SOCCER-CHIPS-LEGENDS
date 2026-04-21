@@ -3254,6 +3254,537 @@
 })();
 </script>
 <!-- ===================== END PART 3/15 — TRAINING HUB REWORK v2 ===================== -->
+<!-- ===================== PART 3.5/15 — FIXED QUICK MATCH (ALWAYS OPENS) ===================== -->
+<style id="SC_P35_FIXED_STYLE">
+  #scQM35Fixed{
+    position:fixed; inset:0;
+    display:none;
+    z-index:2147483647;
+    background: rgba(21,19,26,.45);
+    backdrop-filter: blur(10px);
+  }
+  #scQM35Fixed.on{display:block}
+  #scQM35Fixed, #scQM35Fixed *{ pointer-events:auto !important; }
+
+  .qm35F_wrap{position:absolute; inset:0; display:grid; place-items:center; padding:16px;}
+  .qm35F_card{
+    width:min(1080px, calc(100% - 10px));
+    max-height: calc(100vh - 28px);
+    border-radius:26px;
+    background: rgba(255,255,255,.92);
+    border:1px solid rgba(21,19,26,.12);
+    box-shadow: 0 30px 90px rgba(21,19,26,.18);
+    overflow:hidden;
+    color: rgba(21,19,26,.92);
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", sans-serif;
+    display:flex; flex-direction:column;
+  }
+
+  .qm35F_hd{
+    padding:14px 14px 12px;
+    border-bottom:1px solid rgba(21,19,26,.10);
+    background: linear-gradient(to bottom, rgba(255,255,255,.70), transparent);
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+  }
+  .qm35F_hd h3{margin:0; font-size:16px; font-weight:1300;}
+  .qm35F_x{
+    border:none; cursor:pointer;
+    padding:6px 10px; border-radius:12px;
+    background: rgba(255,255,255,.76);
+    border:1px solid rgba(21,19,26,.12);
+    font-weight:1200; color: rgba(21,19,26,.72);
+  }
+
+  .qm35F_bd{
+    padding:12px 14px 14px;
+    display:grid;
+    grid-template-columns: 1fr 0.78fr;
+    gap:12px;
+    overflow:hidden;
+  }
+  @media (max-width:980px){ .qm35F_bd{grid-template-columns:1fr; overflow:auto;} }
+
+  .qm35F_panel{
+    border-radius:18px;
+    background: rgba(255,255,255,.80);
+    border:1px solid rgba(21,19,26,.10);
+    padding:12px;
+    display:flex; flex-direction:column;
+    min-height: 320px;
+  }
+  .qm35F_panel h4{margin:0; font-size:13px; font-weight:1200;}
+  .qm35F_panel p{margin:8px 0 0; font-size:12.5px; opacity:.75; line-height:1.35;}
+
+  .qm35F_list{
+    margin-top:10px;
+    display:flex; flex-direction:column; gap:10px;
+    overflow:auto;
+    padding-right:4px;
+    max-height: 58vh;
+  }
+
+  .qm35F_row{
+    width:100%;
+    text-align:left;
+    padding:10px 10px;
+    border-radius:18px;
+    background: rgba(255,255,255,.88);
+    border:1px solid rgba(21,19,26,.10);
+    cursor:pointer;
+    font-weight:1200;
+    color: rgba(21,19,26,.92);
+    box-shadow: 0 10px 0 rgba(21,19,26,.10);
+    display:grid;
+    grid-template-columns: 56px 1fr auto;
+    gap:10px;
+    align-items:center;
+  }
+  .qm35F_row:hover{filter:brightness(1.02)}
+  .qm35F_row:active{transform:translateY(8px); box-shadow:0 4px 0 rgba(21,19,26,.10);}
+  .qm35F_row.disabled{opacity:.55; cursor:default}
+
+  .qm35F_logo{
+    width:56px; height:56px;
+    border-radius:18px; overflow:hidden;
+    border:1px solid rgba(21,19,26,.12);
+    background: rgba(255,255,255,.70);
+    display:grid; place-items:center;
+    font-size:20px;
+  }
+  .qm35F_name{display:flex;flex-direction:column;gap:2px}
+  .qm35F_name b{font-size:13px}
+  .qm35F_name span{font-size:12px; opacity:.72; font-weight:1000}
+  .qm35F_meta{font-family: ui-monospace, Menlo, Consolas; font-size:12px; opacity:.78; text-align:right}
+
+  .qm35F_ft{
+    padding:12px 14px 14px;
+    border-top:1px solid rgba(21,19,26,.10);
+    display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;
+  }
+  .qm35F_mini{font-size:12px; opacity:.78}
+  .qm35F_btn{
+    border:none; cursor:pointer;
+    padding:10px 12px;
+    border-radius:16px;
+    background: rgba(255,255,255,.74);
+    border:1px solid rgba(21,19,26,.12);
+    font-weight:1200;
+    color: rgba(21,19,26,.88);
+    box-shadow: 0 10px 0 rgba(21,19,26,.10);
+  }
+  .qm35F_btn:active{transform:translateY(8px); box-shadow:0 4px 0 rgba(21,19,26,.10);}
+  .qm35F_btn.good{background: rgba(60,255,143,.22); border-color: rgba(60,255,143,.30);}
+
+  /* kit dots (3 colors) */
+  .kitDots{display:flex; gap:6px; justify-content:flex-end; align-items:center}
+  .kitDot{width:10px;height:10px;border-radius:50%; border:1px solid rgba(21,19,26,.18); box-shadow:0 1px 0 rgba(0,0,0,.08)}
+
+  .qm35F_infoCard{
+    border-radius:16px;
+    background: rgba(255,255,255,.78);
+    border:1px solid rgba(21,19,26,.10);
+    padding:10px 10px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .qm35F_infoCard b{font-size:12.8px}
+  .qm35F_infoCard span{font-size:12px; opacity:.74; font-weight:1000}
+</style>
+
+<section id="scQM35Fixed" aria-label="Quick Match 3.5 Fixed">
+  <div class="qm35F_wrap">
+    <div class="qm35F_card">
+      <div class="qm35F_hd">
+        <h3>Обычный матч</h3>
+        <button class="qm35F_x" id="qm35F_close" type="button">✕</button>
+      </div>
+
+      <div class="qm35F_bd">
+        <div class="qm35F_panel">
+          <h4 id="qm35F_title">Режим</h4>
+          <p id="qm35F_desc">Клубы или сборные?</p>
+          <div class="qm35F_list" id="qm35F_list"></div>
+        </div>
+
+        <div class="qm35F_panel">
+          <h4>Выбор</h4>
+          <p>Коротко что выбрано.</p>
+          <div class="qm35F_list" id="qm35F_right"></div>
+        </div>
+      </div>
+
+      <div class="qm35F_ft">
+        <div class="qm35F_mini" id="qm35F_step">Шаг 1/6</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap">
+          <button class="qm35F_btn" id="qm35F_back" type="button">Назад</button>
+          <button class="qm35F_btn good" id="qm35F_next" type="button">Далее</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script id="SC_P35_FIXED_SCRIPT">
+(() => {
+  const $=(s,r=document)=>r.querySelector(s);
+  const toastFn = (typeof window.toast==="function") ? window.toast : (m)=>console.log("[toast]", m);
+
+  // --- hide old overlays (if user forgot to delete)
+  const oldIds=["qm32Overlay","qm35Overlay","qm35Re","qm37","qm4Wizard","qm4v3Wizard","qm4Final","m4TouchBar","matchHUD4","matchHUD4F","scQmMega","scQmOne"];
+  function hideOld(){
+    for(const id of oldIds){
+      const el=document.getElementById(id);
+      if(el){
+        el.classList.remove("on");
+        el.style.display="none";
+        el.style.pointerEvents="none";
+      }
+    }
+  }
+
+  // --- lock canvas while open
+  const canvas=document.getElementById("gameCanvas");
+  let prevPE=null;
+  function lockCanvas(lock){
+    if(!canvas) return;
+    if(lock){
+      if(prevPE===null) prevPE = canvas.style.pointerEvents || "";
+      canvas.style.pointerEvents="none";
+    }else{
+      canvas.style.pointerEvents = prevPE ?? "";
+      prevPE=null;
+    }
+  }
+
+  // --- UI
+  const overlay=$("#scQM35Fixed");
+  const listEl=$("#qm35F_list");
+  const rightEl=$("#qm35F_right");
+  const titleEl=$("#qm35F_title");
+  const descEl=$("#qm35F_desc");
+  const stepEl=$("#qm35F_step");
+  const btnClose=$("#qm35F_close");
+  const btnBack=$("#qm35F_back");
+  const btnNext=$("#qm35F_next");
+
+  // --- data
+  const CLUB_TOURN = [
+    {id:"league", title:"Лиговая игра", icon:"📋"},
+    {id:"ucl", title:"Лига чемпионов", icon:"🏆"},
+    {id:"uel", title:"Лига Европы", icon:"🥈"},
+    {id:"uecl", title:"Лига конференции", icon:"🌙"},
+  ];
+  const NATION_TOURN = [
+    {id:"wc", title:"Чемпионат мира", icon:"🌍"},
+    {id:"ec", title:"Чемпионат Европы", icon:"🛡️"},
+    {id:"fr", title:"Товарищеский матч", icon:"🤝"},
+  ];
+
+  const LEAGUES_13 = [
+    {id:"eng", name:"England", flag:"🇬🇧"},
+    {id:"fra", name:"France", flag:"🇫🇷"},
+    {id:"ger", name:"Germany", flag:"🇩🇪"},
+    {id:"ita", name:"Italy", flag:"🇮🇹"},
+    {id:"esp", name:"Spain", flag:"🇪🇸"},
+    {id:"por", name:"Portugal", flag:"🇵🇹"},
+    {id:"ned", name:"Netherlands", flag:"🇳🇱"},
+    {id:"tur", name:"Turkey", flag:"🇹🇷"},
+    {id:"ukr", name:"Ukraine", flag:"🇺🇦"},
+    {id:"bra", name:"Brazil", flag:"🇧🇷"},
+    {id:"arg", name:"Argentina", flag:"🇦🇷"},
+    {id:"usa", name:"USA", flag:"🇺🇸"},
+    {id:"jpn", name:"Japan", flag:"🇯🇵"},
+  ];
+  const TIERS = { eng:3,fra:2,ger:3,ita:2,esp:3,por:2,ned:2,tur:1,ukr:1,bra:1,arg:1,usa:1,jpn:1 };
+
+  const NATIONS_35 = [
+    {id:"eng",name:"England",flag:"🇬🇧"},{id:"fra",name:"France",flag:"🇫🇷"},{id:"ger",name:"Germany",flag:"🇩🇪"},
+    {id:"ita",name:"Italy",flag:"🇮🇹"},{id:"esp",name:"Spain",flag:"🇪🇸"},{id:"por",name:"Portugal",flag:"🇵🇹"},
+    {id:"ned",name:"Netherlands",flag:"🇳🇱"},{id:"bel",name:"Belgium",flag:"🇧🇪"},{id:"sui",name:"Switzerland",flag:"🇨🇭"},
+    {id:"aut",name:"Austria",flag:"🇦🇹"},{id:"pol",name:"Poland",flag:"🇵🇱"},{id:"cze",name:"Czechia",flag:"🇨🇿"},
+    {id:"cro",name:"Croatia",flag:"🇭🇷"},{id:"srb",name:"Serbia",flag:"🇷🇸"},{id:"den",name:"Denmark",flag:"🇩🇰"},
+    {id:"swe",name:"Sweden",flag:"🇸🇪"},{id:"nor",name:"Norway",flag:"🇳🇴"},{id:"fin",name:"Finland",flag:"🇫🇮"},
+    {id:"ukr",name:"Ukraine",flag:"🇺🇦"},{id:"tur",name:"Turkey",flag:"🇹🇷"},{id:"gre",name:"Greece",flag:"🇬🇷"},
+    {id:"rou",name:"Romania",flag:"🇷🇴"},{id:"bul",name:"Bulgaria",flag:"🇧🇬"},{id:"hun",name:"Hungary",flag:"🇭🇺"},
+    {id:"irl",name:"Ireland",flag:"🇮🇪"},{id:"sco",name:"Scotland",flag:"🏴"},{id:"wal",name:"Wales",flag:"🏴"},
+    {id:"usa",name:"USA",flag:"🇺🇸"},{id:"mex",name:"Mexico",flag:"🇲🇽"},{id:"bra",name:"Brazil",flag:"🇧🇷"},
+    {id:"arg",name:"Argentina",flag:"🇦🇷"},{id:"uru",name:"Uruguay",flag:"🇺🇾"},{id:"col",name:"Colombia",flag:"🇨🇴"},
+    {id:"jpn",name:"Japan",flag:"🇯🇵"},{id:"kor",name:"Korea",flag:"🇰🇷"},
+  ];
+
+  // --- team gen + logos + kit dots
+  const NICKS=["Lions","Falcons","Dragons","Titans","Rangers","Phoenix","Knights","Hawks","Bulls","Sharks","Eagles","Stars","Storm","Blaze","Orbit","Vortex"];
+  const CITY_POOLS = {
+    eng:["Redford","Kingsport","Ashwell","Wexham","Brightmere","Riverton","Stonebridge","Northgate","Eastvale","Westmoor","Southwick","Lakeshire","Harborough","Crownfield","Millford","Yorken"],
+    fra:["Parisia","Lyonnel","Marselia","Lilleaux","Nantesse","Bordeauxa","Rennesia","Niceval","Toulousa","Strasbour","Dijonna","Monacelle","Reimsia","Metzia","Angersol","Lensaire"],
+    ger:["Berlinum","Munichra","Dortmundt","Hamburgh","Leipziga","Stuttgart","Bremena","Frankfur","Kolnberg","Dresdena","Hannover","Mainzia","Freibura","Augsbur","Bochumia","Kielstadt"],
+    ita:["Torrena","Milanoza","Romagna","Napoliri","Fiorenza","Bolognia","Genoara","Veronetta","Palermia","Cagliara","Udinesea","Leccevia","Parmania","Pescaria","Modenae","Bresciare"],
+    esp:["Valdoria","Sevoria","Granadae","Bilbaoza","Cordena","Malagro","Tarragonae","Alicanté","Toledan","Murciana","Zarago","Vallado","Santoria","Barcena","Gironae","Pamplonae"],
+    por:["Lisbor","Portuna","Braganza","Coimbria","Farovia","Madeira","Setubala","Avegaria","Viseuna","Guimara","Leirina","Ericeira","Lagosia","Covilha","Sintrana","Estoria"],
+    ned:["Amstera","Rotteria","Eindovia","Utrecha","Tilburga","Groninga","Nijmena","Arnhema","Bredana","Zwollia","Haarlema","Almera","Leeuward","Enscheda","Dordrea","Maastrichta"],
+    tur:["Istanbul","Ankarin","Izmira","Bursana","Antalya","Adanora","Konya","Trabzona","Kayseri","Gaziantep","Eskisehir","Mersina","Samsuna","Rize","Denizli","Sivas"],
+    ukr:["Kyiv","Lviv","Odesa","Dnipro","Kharkiv","Poltava","Cherkasy","Sumy","Rivne","Ternopil","Mykolaiv","Lutsk","Zaporizh","Ivano","Uzhhorod","Kropyvny"],
+    bra:["SaoRiva","RioVale","BeloMar","Curitiba","Recifia","Salvador","Fortaleza","PortoAleg","Goiania","Floria","Natalis","Vitoria","Santosia","Campinas","Manaura","Brasilia"],
+    arg:["Buenara","Rosaria","Cordoba","Mendozia","LaPlata","Tucumana","MarDel","Salta","SantaFe","Neuquen","Lanusia","Avellana","Quilmesia","Racinga","Banfielda","Estudiantesa"],
+    usa:["NewHarbor","LAUnion","ChicagoSteel","MiamiWaves","DallasRangers","SeattleSound","BostonCrown","DenverPeak","PhoenixSun","PortlandRovers","AustinAth","OrlandoCity","DetroitForge","SanJose","VegasNeon","AtlantaUnited"],
+    jpn:["Tokyo","Osaka","Nagoya","Sapporo","Fukuoka","Kobe","Yokohama","Sendai","Niigata","Hiroshima","Kyoto","Kawasaki","Urawa","Shizuoka","Chiba","Nara"],
+  };
+
+  const PALETTE=[
+    ["#ff7a00","#7a35ff","#ffffff"],
+    ["#21d7ff","#ff2da0","#ffffff"],
+    ["#3cff8f","#0b1020","#ffffff"],
+    ["#ffffff","#ff7a00","#7a35ff"],
+    ["#7a35ff","#ffffff","#ff2da0"],
+    ["#ff2da0","#15131a","#21d7ff"],
+    ["#21d7ff","#7a35ff","#ffffff"],
+    ["#3cff8f","#ffffff","#0b1020"]
+  ];
+  function rnd(seed){ const x=Math.sin(seed)*10000; return x-Math.floor(x); }
+  function pick(arr, seed){ return arr[Math.floor(rnd(seed)*arr.length) % arr.length; }
+
+  function logoTemplate(seed, primary, secondary, accent){
+    return {
+      seed, primary, secondary, accent,
+      shape: Math.floor(rnd(seed+1)*3),
+      stripes: 2+Math.floor(rnd(seed+2)*5),
+      icon: Math.floor(rnd(seed+3)*6),
+      crown: rnd(seed+4)>0.58,
+      laurel: rnd(seed+5)>0.40,
+      initials: ["SC","FC","AC","UC","RC","MC","BC","DC"][Math.floor(rnd(seed+6)*8)],
+      accentText: rnd(seed+7)>0.5 ? "rgba(255,255,255,.86)" : "rgba(0,0,0,.30)"
+    };
+  }
+  function renderLogo(t){
+    const a=t.primary, b=t.secondary;
+    const defs = `
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="${a}" stop-opacity="0.97"/>
+          <stop offset="1" stop-color="${b}" stop-opacity="0.97"/>
+        </linearGradient>
+      </defs>`;
+    const outer = (t.shape===0)
+      ? `<path d="M32 5 C50 5 60 11 60 11 V34 C60 52 48 60 32 62 C16 60 4 52 4 34 V11 C4 11 14 5 32 5 Z" fill="url(#g)" stroke="rgba(255,255,255,.34)" stroke-width="2"/>`
+      : (t.shape===1)
+      ? `<path d="M32 4 L56 16 V42 L32 60 L8 42 V16 Z" fill="url(#g)" stroke="rgba(255,255,255,.34)" stroke-width="2"/>`
+      : `<circle cx="32" cy="32" r="28" fill="url(#g)" stroke="rgba(255,255,255,.34)" stroke-width="2"/>`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+      ${defs}${outer}
+      <text x="32" y="54" text-anchor="middle" font-size="14" font-weight="900" fill="${t.accentText}"
+        font-family="ui-sans-serif,system-ui">${t.initials}</text>
+    </svg>`;
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  }
+
+  function kitDotsHTML(cols){
+    const a=cols[0]||"#fff", b=cols[1]||"#000", c=cols[2]||null;
+    return `<div class="kitDots">
+      <span class="kitDot" style="background:${a}"></span>
+      <span class="kitDot" style="background:${b}"></span>
+      ${c?`<span class="kitDot" style="background:${c}"></span>`:""}
+    </div>`;
+  }
+
+  function ratingByTier(tier,i){
+    if(tier===1) return Math.round(87 - 15*(i/15));
+    if(tier===2) return Math.round(78 - 16*(i/15));
+    return Math.round(70 - 20*(i/15));
+  }
+
+  function buildTeams(leagueId, tier){
+    const pool = CITY_POOLS[leagueId] || ["Aurora","Nebula","Eclipse","Starlight","Nova","Comet","Orion","Vega","Atlas","Zenith","Voyager","Titan","Phoenix","Riverton","Kingsport","Northgate"];
+    const base = (leagueId.charCodeAt(0)*31 + leagueId.charCodeAt(1)*17 + tier*101) % 9999;
+    const teams=[];
+    for(let i=0;i<16;i++){
+      const city = pool[i % pool.length];
+      const nick = NICKS[(i*5 + tier*3) % NICKS.length];
+      const name = (i%2===0) ? `${city} ${nick}` : `${city} FC`;
+      const rating = ratingByTier(tier,i);
+      const seed = base + i*13;
+      const pal = PALETTE[seed % PALETTE.length];
+      const templ = logoTemplate(seed, pal[0], pal[1], pal[2]);
+      const logo = renderLogo(templ);
+      teams.push({ id:`${leagueId}_${tier}_${i}`, name, rating, logo, kit:{home:[pal[0],pal[1],pal[2]]} });
+    }
+    return teams;
+  }
+
+  // -------- state machine (up to team pick)
+  const ST = { screen:"mode", history:[], mode:null, tourn:null, league:null, tier:null, pick:null };
+
+  function push(scr){ ST.history.push(ST.screen); ST.screen=scr; render(); }
+  function back(){ const p=ST.history.pop(); if(!p){ close(); return; } ST.screen=p; render(); }
+
+  function clear(){
+    listEl.innerHTML="";
+    rightEl.innerHTML="";
+  }
+  function infoCard(title, subtitle){
+    const d=document.createElement("div");
+    d.className="qm35InfoCard";
+    d.innerHTML=`<b>${title}</b><span>${subtitle||"—"}</span>`;
+    rightEl.appendChild(d);
+  }
+
+  function addRow({logo,title,sub,meta,onClick,disabled=false}){
+    const b=document.createElement("button");
+    b.type="button";
+    b.className="qm35Row" + (disabled ? " disabled":"");
+    b.innerHTML=`
+      <div class="qm35Logo">${logo||""}</div>
+      <div class="qm35Name"><b>${title}</b><span>${sub||""}</span></div>
+      <div class="qm35Meta">${meta||""}</div>
+    `;
+    if(!disabled){
+      b.addEventListener("click",(e)=>{ e.preventDefault(); onClick && onClick(); }, true);
+    }
+    listEl.appendChild(b);
+  }
+
+  function render(){
+    clear();
+
+    infoCard("Режим", ST.mode ? (ST.mode==="clubs"?"Клубы":"Сборные") : "—");
+    infoCard("Турнир", ST.tourn || "—");
+    if(ST.mode==="clubs"){
+      infoCard("Страна", ST.league ? `${ST.league.flag} ${ST.league.name}` : "—");
+      infoCard("Дивизион", ST.tier ? `Лига ${ST.tier}` : "—");
+    }
+    infoCard("Выбор", ST.pick ? (ST.pick.name || ST.pick) : "—");
+
+    if(ST.screen==="mode"){
+      stepEl.textContent="Шаг 1/5";
+      titleEl.textContent="Режим";
+      descEl.textContent="Клубы или сборные?";
+      btnBack.disabled=true;
+
+      addRow({logo:"🏟️",title:"Клубы",sub:"лиги и клубные турниры",meta:"",onClick:()=>{ST.mode="clubs"; push("tourn");}});
+      addRow({logo:"🏳️",title:"Сборные",sub:"турниры сборных",meta:"",onClick:()=>{ST.mode="nations"; push("tourn");}});
+      return;
+    }
+
+    if(ST.screen==="tourn"){
+      stepEl.textContent="Шаг 2/5";
+      titleEl.textContent="Турнир";
+      descEl.textContent="Выбери турнир.";
+      btnBack.disabled=false;
+
+      const list = (ST.mode==="clubs") ? CLUB_TOURN : NATION_TOURN;
+      list.forEach((t,i)=>{
+        addRow({logo:t.icon,title:t.title,sub:"",meta:String(i+1),onClick:()=>{
+          ST.tourn=t.id;
+          if(ST.mode==="clubs") push("leagues");
+          else push("nations");
+        }});
+      });
+      return;
+    }
+
+    if(ST.screen==="leagues"){
+      stepEl.textContent="Шаг 3/5";
+      titleEl.textContent="Лиги (13 стран)";
+      descEl.textContent="Выбери страну.";
+      btnBack.disabled=false;
+
+      LEAGUES_13.forEach((c,i)=>{
+        addRow({logo:c.flag,title:c.name,sub:`Лиг: ${TIERS[c.id]||1}`,meta:String(i+1),onClick:()=>{ST.league=c; push("tiers");}});
+      });
+      return;
+    }
+
+    if(ST.screen==="tiers"){
+      stepEl.textContent="Шаг 4/5";
+      titleEl.textContent=`${ST.league.flag} ${ST.league.name}`;
+      descEl.textContent="Выбери дивизион.";
+      btnBack.disabled=false;
+
+      const n=TIERS[ST.league.id]||1;
+      for(let i=1;i<=n;i++){
+        addRow({logo:String(i),title:`${i}-я лига ${ST.league.name}`,sub:"",meta:"",onClick:()=>{ST.tier=i; push("teams");}});
+      }
+      return;
+    }
+
+    if(ST.screen==="teams"){
+      stepEl.textContent="Шаг 5/5";
+      titleEl.textContent=`Команды · ${ST.league.flag} ${ST.league.name} · Лига ${ST.tier}`;
+      descEl.textContent="Выбери команду (имя + рейтинг + форма).";
+      btnBack.disabled=false;
+
+      const teams=buildTeams(ST.league.id, ST.tier);
+      teams.forEach(tm=>{
+        addRow({
+          logo:`<img src="${tm.logo}" style="width:100%;        sub:`Rating ${tm.rating}`,
+          meta:kitDotsHTML(tm.kit.home),
+          onClick:()=>{
+            ST.pick = tm;
+            try{
+              localStorage.setItem("sc_qm_team_pick", JSON.stringify({
+                mode:"clubs", tourn:ST.tourn, league:ST.league.id, tier:ST.tier, team:tm
+              }));
+            }catch{}
+            descEl.textContent = "Команда выбрана ✅ Дальше — Part 3.6 (состав/схема).";
+          }
+        });
+      });
+      return;
+    }
+
+    if(ST.screen==="nations"){
+      stepEl.textContent="Шаг 3/3";
+      titleEl.textContent="Сборные (35)";
+      descEl.textContent="Выбери сборную.";
+      btnBack.disabled=false;
+
+      NATIONS_35.forEach((n,i)=>{
+        addRow({logo:n.flag,title:n.name,sub:"National Team",meta:String(i+1),onClick:()=>{
+          ST.pick = n;
+          try{
+            localStorage.setItem("sc_qm_team_pick", JSON.stringify({ mode:"nations", tourn:ST.tourn, nation:n }));
+          }catch{}
+          descEl.textContent = "Сборная выбрана ✅ Дальше — Part 3.6 (состав/схема).";
+        }});
+      });
+      return;
+    }
+  }
+
+  function open(){
+    hideOld();
+    ST.screen="mode";
+    ST.history=[];
+    ST.mode=null; ST.tourn=null; ST.league=null; ST.tier=null; ST.pick=null;
+    render();
+    overlay.classList.add("on");
+    lockCanvas(true);
+  }
+  function close(){
+    overlay.classList.remove("on");
+    lockCanvas(false);
+  }
+
+  btnClose.addEventListener("click",(e)=>{ e.preventDefault(); close(); }, true);
+  btnBack.addEventListener("click",(e)=>{ e.preventDefault(); back(); }, true);
+  btnNext.addEventListener("click",(e)=>{ e.preventDefault(); }, true);
+  overlay.addEventListener("click",(e)=>{ if(e.target===overlay) close(); }, true);
+
+  // HARD open: window capture (beats old handlers)
+  function intercept(e){
+    const btn = e.target?.closest?.("#m2QuickMatch");
+    if(!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    open();
+  }
+  window.addEventListener("pointerdown", intercept, true);
+  window.addEventListener("click", intercept, true);
+
+})();
+</script>
+<!-- ===================== END PART 3.5/15 — FIXED QUICK MATCH =====================
 <!-- ===================== PART 3.1/15 — FULLSCREEN BUTTON (PC + MOBILE) ===================== -->
 <style id="SC_P31_FULLSCREEN_STYLE">
   #fsBtn31{
@@ -3415,237 +3946,222 @@
 })();
 </script>
 <!-- ===================== END PART 3.1/15 — FULLSCREEN BUTTON ===================== -->
-<!-- ===================== PART 3.2/15 — ZOOM BUTTONS (PC + MOBILE) ===================== -->
-<style id="SC_P32_ZOOM_STYLE">
-  /* Панель рядом с FULL */
-  #fsPanel31{
-    position: fixed;
-    right: 12px;
-    top: 12px;
-    z-index: 2147483647;
-    display: flex;
-    gap: 8px;
-    align-items: center;
+<!-- ===================== PART 3.3/15 — MOBILE BUTTONS BIGGER + STAMINA SLOW + TACKLE RULES (FIXED) ===================== -->
+<style id="SC_P33_FIXED_STYLE">
+  /* ✅ 1) Увеличиваем ТОЛЬКО touch-кнопки на телефоне (меню НЕ трогаем) */
+  @media (pointer: coarse) and (hover: none){
+    /* общий масштаб мобильного управления */
+    #touchUI{
+      transform: scale(1.28);
+      transform-origin: bottom left;
+    }
+    /* делаем текст чуть крупнее */
+    #touchUI button,
+    #touchUI .tbtn{
+      font-size: 14px !important;
+      font-weight: 1200 !important;
+    }
+
+    /* если у тебя есть ромб кнопок .touchBtns, чуть увеличим отступы чтобы не липло */
+    .touchBtns{
+      gap: 10px !important;
+    }
   }
 
-  /* Чтобы старый FULL не торчал отдельно, прячем его и используем в панели */
-  #fsBtn31{ position: static !important; right:auto !important; top:auto !important; }
-
-  .zBtn32{
-    border: none;
-    cursor: pointer;
-    padding: 10px 12px;
-    border-radius: 16px;
-    background: rgba(255,255,255,.78);
-    border: 1px solid rgba(21,19,26,.12);
-    box-shadow: 0 14px 36px rgba(21,19,26,.12);
-    backdrop-filter: blur(12px);
-    font-weight: 1200;
-    color: rgba(21,19,26,.86);
-    user-select: none;
-    min-width: 56px;
-    text-align: center;
-  }
-  .zBtn32:active{ transform: translateY(6px); }
-
-  /* Зум через CSS переменную */
-  :root{ --scZoom32: 1; }
-
-  /* Масштабируем сам canvas */
-  #gameCanvas{
-    transform: scale(var(--scZoom32));
-    transform-origin: center center;
-  }
-
-  /* В псевдо-фуллскрине (из Part 3.1) тоже зум работает */
-  body.pseudo-fs31 #gameCanvas{
-    transform: scale(var(--scZoom32)) !important;
-    transform-origin: center center !important;
+  /* ✅ 2) На ПК ничего не масштабируем */
+  @media (pointer: fine){
+    #touchUI{ transform:none !important; }
   }
 </style>
 
-<script id="SC_P32_ZOOM_SCRIPT">
+<script id="SC_P33_FIXED_SCRIPT">
 (() => {
-  const canvas = document.getElementById("gameCanvas");
-  const fsBtn = document.getElementById("fsBtn31"); // твоя кнопка из Part 3.1
-  if(!canvas || !fsBtn) return;
+  const toastFn = (typeof window.toast==="function") ? window.toast : (m)=>console.log("[toast]", m);
 
-  // 1) Создаём панель и переносим FULL внутрь
-  let panel = document.getElementById("fsPanel31");
-  if(!panel){
-    panel = document.createElement("div");
-    panel.id = "fsPanel31";
-    document.body.appendChild(panel);
-  }
-
-  // если кнопка FULL ещё не в панели — переносим
-  if(fsBtn.parentElement !== panel){
-    panel.appendChild(fsBtn);
-  }
-
-  // 2) Кнопки зума
-  function makeBtn(id, text){
-    let b = document.getElementById(id);
-    if(b) return b;
-    b = document.createElement("button");
-    b.id = id;
-    b.className = "zBtn32";
-    b.type = "button";
-    b.textContent = text;
-    panel.insertBefore(b, fsBtn); // слева от FULL
-    return b;
-  }
-
-  const btnMinus = makeBtn("zoomOut32", "−");
-  const btnReset = makeBtn("zoomReset32", "100%");
-  const btnPlus  = makeBtn("zoomIn32", "+");
-
-  // 3) Настройки зума
-  const LS_KEY = "sc_zoom_32";
-  const Z_MIN = 0.75;   // отдаление
-  const Z_MAX = 1.60;   // приближение
-  const Z_STEP = 0.10;  // шаг
-
-  function clamp(v){ return Math.max(Z_MIN, Math.min(Z_MAX, v)); }
-  function round1(v){ return Math.round(v*100)/100; }
-
-  function setZoom(z){
-    z = clamp(round1(z));
-    document.documentElement.style.setProperty("--scZoom32", String(z));
-    btnReset.textContent = Math.round(z*100) + "%";
-    try{ localStorage.setItem(LS_KEY, String(z)); }catch{}
-    // Дадим движку шанс подстроиться (если он слушает resize)
-    setTimeout(()=>window.dispatchEvent(new Event("resize")), 0);
-  }
-
-  function getZoom(){
-    const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--scZoom32")) || 1;
-    return v;
-  }
-
-  function loadZoom(){
+  /* =========================
+     A) STAMINA RATIO (0..1)
+  ========================== */
+  function getStaminaRatio(){
+    // 1) если есть объект ST (часто так делают)
     try{
-      const s = localStorage.getItem(LS_KEY);
-      if(!s) return;
-      const z = parseFloat(s);
-      if(isFinite(z)) setZoom(z);
+      if(typeof ST === "object" && ST){
+        // вариант: ST.value 0..1
+        if(typeof ST.value === "number" && ST.value <= 1.01) return Math.max(0, Math.min(1, ST.value));
+        // вариант: ST.value / ST.max
+        if(typeof ST.value === "number" && typeof ST.max === "number" && ST.max > 0){
+          return Math.max(0, Math.min(1, ST.value / ST.max));
+        }
+      }
+    }catch{}
+
+    // 2) попробуем взять из DOM полоски (если есть)
+    try{
+      const fill = document.querySelector(".stamina .fill, #staminaFill, .staminaFill");
+      if(fill){
+        const w = fill.style.width || "";
+        const m = w.match(/([\d.]+)%/);
+        if(m) return Math.max(0, Math.min(1, parseFloat(m[1])/100));
+      }
+    }catch{}
+
+    return 1; // если ничего не нашли — считаем, что энергия есть
+  }
+
+  /* =========================
+     B) SPEED: if stamina ~0 => -30% speed
+     (патчим movePlayer максимально надёжно)
+  ========================== */
+  function patchMovePlayer(){
+    let fn = null;
+
+    // пробуем глобальную переменную
+    try{ if(typeof movePlayer === "function") fn = movePlayer; }catch{}
+
+    // пробуем window
+    if(!fn && typeof window.movePlayer === "function") fn = window.movePlayer;
+
+    if(!fn || fn.__p33_speedPatched) return;
+
+    const old = fn;
+
+    const wrapped = function(dt){
+      const r = getStaminaRatio();
+      let savedBase = null;
+      let savedSprint = null;
+
+      try{
+        if(r <= 0.02 && typeof player === "object" && player){
+          // энергии нет -> -30% скорости
+          if(typeof player.baseSpeed === "number"){
+            savedBase = player.baseSpeed;
+            player.baseSpeed = savedBase * 0.70;
+          }
+          // если есть sprintMul — тоже режем, чтобы спринт не ломал правило
+          if(typeof player.sprintMul === "number"){
+            savedSprint = player.sprintMul;
+            player.sprintMul = savedSprint * 0.70;
+          }
+        }
+      }catch{}
+
+      const res = old(dt);
+
+      // вернуть обратно
+      try{
+        if(savedBase !== null) player.baseSpeed = savedBase;
+        if(savedSprint !== null) player.sprintMul = savedSprint;
+      }catch{}
+
+      return res;
+    };
+
+    wrapped.__p33_speedPatched = true;
+
+    // ставим обратно и в глобал, и в window
+    try{ movePlayer = wrapped; }catch{}
+    window.movePlayer = wrapped;
+
+    toastFn("✅ Speed patch ON (stamina=0 => -30%)");
+  }
+
+  // пробуем сразу и потом периодически (на случай, если movePlayer создаётся позже)
+  patchMovePlayer();
+  setInterval(patchMovePlayer, 500);
+
+  /* =========================
+     C) TACKLE RULES:
+        - cooldown 2s
+        - no tackle if stamina < 30%
+        (оборачиваем существующий tryTackle/doTackle)
+  ========================== */
+  let nextTackleAllowed = 0;
+
+  function canTackle(){
+    const r = getStaminaRatio();
+    if(r < 0.30) return {ok:false, reason:"low"};
+    const now = performance.now();
+    if(now < nextTackleAllowed) return {ok:false, reason:"cd"};
+    return {ok:true, reason:"ok"};
+  }
+
+  function markTackle(){
+    nextTackleAllowed = performance.now() + 2000; // 2 секунды
+  }
+
+  function wrapTackleFn(name){
+    const fn = window[name];
+    if(typeof fn !== "function" || fn.__p33_tacklePatched) return;
+
+    const old = fn;
+    const wrapped = function(...args){
+      const c = canTackle();
+      if(!c.ok){
+        // тихо блокируем (без спама)
+        if(c.reason==="low") toastFn("⛔ Подкат: энергии меньше 30%");
+        return false;
+      }
+      markTackle();
+      return old.apply(this, args);
+    };
+    wrapped.__p33_tacklePatched = true;
+    window[name] = wrapped;
+  }
+
+  // периодически пытаемся обернуть (если функции появляются позже)
+  function patchTackle(){
+    wrapTackleFn("tryTackle");
+    wrapTackleFn("doTackle");
+  }
+  patchTackle();
+  setInterval(patchTackle, 500);
+
+  // Доп. гарантия: перехват KeyE и кнопки на телефоне, чтобы правило срабатывало ВСЕГДА
+  function runTackle(){
+    const c = canTackle();
+    if(!c.ok){
+      if(c.reason==="low") toastFn("⛔ Подкат: энергии меньше 30%");
+      return;
+    }
+    markTackle();
+
+    // если есть функции — вызываем
+    if(typeof window.tryTackle === "function") { window.tryTackle(); return; }
+    if(typeof window.doTackle === "function") { window.doTackle(); return; }
+
+    // fallback: лёгкий “рывок + выбивание мяча”
+    try{
+      if(typeof player !== "object" || typeof ball !== "object") return;
+      const a = (typeof aimDir === "function") ? aimDir() : {x:1,y:0};
+      player.x += a.x*28;
+      player.y += a.y*28;
+      const dx = ball.x - player.x, dy = ball.y - player.y;
+      if(Math.hypot(dx,dy) < (player.r + ball.r + 26)){
+        ball.vx += a.x*240;
+        ball.vy += a.y*240;
+      }
     }catch{}
   }
 
-  // 4) Управление
-  btnPlus.addEventListener("click",(e)=>{ e.preventDefault(); setZoom(getZoom()+Z_STEP); }, {passive:false});
-  btnMinus.addEventListener("click",(e)=>{ e.preventDefault(); setZoom(getZoom()-Z_STEP); }, {passive:false});
-  btnReset.addEventListener("click",(e)=>{ e.preventDefault(); setZoom(1); }, {passive:false});
-
-  // 5) Горячие клавиши на ПК (не мешают игре): Ctrl + / Ctrl - / Ctrl 0
+  // ПК: E (если другие части слушают E — мы не ломаем, мы просто делаем правило)
   window.addEventListener("keydown",(e)=>{
-    if(!e.ctrlKey) return;
-    if(e.code === "NumpadAdd" || e.key === "="){ e.preventDefault(); setZoom(getZoom()+Z_STEP); }
-    if(e.code === "NumpadSubtract" || e.key === "-"){ e.preventDefault(); setZoom(getZoom()-Z_STEP); }
-    if(e.code === "Digit0" || e.code === "Numpad0"){ e.preventDefault(); setZoom(1); }
+    if(e.code !== "KeyE") return;
+    // не блокируем полностью, чтобы не ломать чужие слушатели,
+    // но правило будет работать через обёртку tryTackle/doTackle.
+    // Дополнительно запускаем runTackle, если вдруг некуда.
+    setTimeout(()=>runTackle(), 0);
   }, true);
 
-  // 6) Старт
-  setZoom(1);
-  loadZoom();
-})();
-</script>
-<!-- ===================== END PART 3.2/15 — ZOOM BUTTONS ===================== -->
-<!-- ===================== PART 3.3/15 — MOBILE UI ZOOM (MENUS + BUTTONS FOLLOW GAME ZOOM) ===================== -->
-<style id="SC_P33_UI_ZOOM_STYLE">
-  :root{ --scUIZoom33: 1; }
-
-  /* Включаем UI-zoom только на телефоне (coarse + no hover) */
-  @media (pointer: coarse) and (hover: none){
-    /* Панель FULL/ZOOM (наша) */
-    #fsPanel31{
-      transform: scale(var(--scUIZoom33));
-      transform-origin: top right;
-    }
-
-    /* Touch UI (твои мобильные кнопки) */
-    #touchUI{
-      transform: scale(var(--scUIZoom33));
-      transform-origin: bottom left;
-    }
-
-    /* Если у тебя есть отдельные блоки внутри touchUI — подстрахуем */
-    .touchBtns, .joy, .tbtn{
-      transform-origin: bottom left;
-    }
-
-    /* Меню и модалки (главное меню, настройки, тренировка-хаб и т.д.) —
-       масштабируем от центра, чтобы не “съезжало” */
-    #scMenu2,
-    #m2Settings,
-    #scTrainHub3,
-    #scTrain3,
-    #trainHUD3,
-    #matchHUD4,
-    #matchHUD4F,
-    #qm4Wizard,
-    #qm4v3Wizard,
-    #qm4Final,
-    #qm32Overlay,
-    #qm35Overlay,
-    #qm35Re,
-    #scQmMega,
-    #scQmOne{
-      transform: scale(var(--scUIZoom33));
-      transform-origin: center center;
-    }
+  // Телефон: кнопка tackle (если есть)
+  function hookMobileBtn(){
+    const b = document.getElementById("btnTTackle");
+    if(!b || b.__p33_hooked) return;
+    b.__p33_hooked = true;
+    b.addEventListener("click",(e)=>{ e.preventDefault(); runTackle(); }, {passive:false});
   }
-</style>
-
-<script id="SC_P33_UI_ZOOM_SCRIPT">
-(() => {
-  // Только телефон/планшет с touch (как ты просил — для телефона важно)
-  const isTouchPhone = matchMedia("(pointer: coarse)").matches && matchMedia("(hover: none)").matches;
-
-  if(!isTouchPhone) return; // ПК не трогаем
-
-  // Читаем зум из Part 3.2 (CSS переменная или localStorage)
-  function readZoom(){
-    // 1) пробуем взять из CSS переменной --scZoom32
-    const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--scZoom32"));
-    if(Number.isFinite(z) && z > 0) return z;
-
-    // 2) fallback: localStorage
-    try{
-      const s = localStorage.getItem("sc_zoom_32");
-      const v = parseFloat(s);
-      if(Number.isFinite(v) && v > 0) return v;
-    }catch{}
-
-    return 1;
-  }
-
-  function setUiZoom(z){
-    // лимиты (чтобы UI не стал огромным/крошечным)
-    const Z_MIN = 0.75;
-    const Z_MAX = 1.60;
-    const zz = Math.max(Z_MIN, Math.min(Z_MAX, z));
-    document.documentElement.style.setProperty("--scUIZoom33", String(zz));
-  }
-
-  // Синхронизация: когда меняется зум игры — меняем UI.
-  // Самый стабильный способ без правок Part 3.2 — короткий polling.
-  let last = -1;
-  setInterval(() => {
-    const z = readZoom();
-    if(Math.abs(z - last) > 0.001){
-      last = z;
-      setUiZoom(z);
-
-      // если ты в псевдо-фуллскрине — иногда iOS любит пересчитывать лэйаут
-      // пинок resize помогает UI заново встать красиво
-      setTimeout(()=>window.dispatchEvent(new Event("resize")), 0);
-    }
-  }, 120);
-
-  // Первичная установка
-  setUiZoom(readZoom());
+  hookMobileBtn();
+  setInterval(hookMobileBtn, 600);
 
 })();
 </script>
-<!-- ===================== END PART 3.3/15 — MOBILE UI ZOOM ===================== -->
+<!-- ===================== END PART 3.3/15 ===================== -->
+``
