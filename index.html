@@ -4461,3 +4461,132 @@
 })();
 </script>
 <!-- ===================== END PART 3.5/15 — CANVAS ZOOM ONLY ===================== -->
+<!-- ===================== PART 3.6/15 — MOBILE MENU FIT (AUTO SCALE TO FIT SCREEN) ===================== -->
+<style id="SC_P36_MENU_FIT_STYLE">
+  :root{
+    --scMenuScale36: 1;
+  }
+
+  /* Масштабируем только меню/настройки, НЕ канвас и НЕ управление */
+  @media (pointer: coarse) and (hover: none){
+    #scMenu2.on{
+      transform: scale(var(--scMenuScale36));
+      transform-origin: center top;
+    }
+    #m2Settings.on{
+      transform: scale(var(--scMenuScale36));
+      transform-origin: center center;
+    }
+  }
+</style>
+
+<script id="SC_P36_MENU_FIT_SCRIPT">
+(() => {
+  // Только для телефонов/тач
+  const isTouch = matchMedia("(pointer: coarse)").matches && matchMedia("(hover: none)").matches;
+  if(!isTouch) return;
+
+  const menu = document.getElementById("scMenu2");
+  const settings = document.getElementById("m2Settings");
+
+  // Если у тебя вдруг меню/настройки называются иначе — просто не будет работать, но не сломает игру
+  if(!menu && !settings) return;
+
+  // Базовый масштаб “чуть меньше” (то, что ты хотел)
+  // 0.88 = уменьшили примерно на 12% (обычно этого хватает)
+  const BASE = 0.88;
+
+  // Минимум, чтобы совсем не превратить в микротекст
+  const MIN = 0.72;
+
+  function setScale(v){
+    document.documentElement.style.setProperty("--scMenuScale36", String(v));
+  }
+
+  function isMenuOpen(){
+    return menu && menu.classList.contains("on");
+  }
+  function isSettingsOpen(){
+    return settings && settings.classList.contains("on");
+  }
+
+  // Пытаемся найти “контент”, который реально должен влезать
+  function getMenuContentEl(){
+    // у тебя в Part 2 меню внутри .m2Wrap
+    return menu ? (menu.querySelector(".m2Wrap") || menu) : null;
+  }
+  function getSettingsContentEl(){
+    // у тебя в Part 2 модалка внутри .m2Card
+    return settings ? (settings.querySelector(".m2Card") || settings) : null;
+  }
+
+  // Автоподбор масштаба: уменьшаем пока высота контента не станет <= высоты экрана
+  function fitOne(contentEl){
+    if(!contentEl) return BASE;
+
+    // Сначала ставим базовый
+    let s = BASE;
+    setScale(s);
+
+    // даём браузеру применить transform
+    // потом меряем: rect.height — уже с масштабом
+    for(let i=0;i<10;i++){
+      const rect = contentEl.getBoundingClientRect();
+      const pad = 16;
+      const maxH = window.innerHeight - pad*2;
+
+      if(rect.height <= maxH) break; // влезло
+
+      // если не влезло — уменьшаем ещё
+      s = Math.max(MIN, s - 0.04);
+      setScale(s);
+
+      if(s <= MIN) break;
+    }
+
+    return s;
+  }
+
+  function fitNow(){
+    // Если ничего не открыто — возвращаем 1
+    if(!isMenuOpen() && !isSettingsOpen()){
+      setScale(1);
+      return;
+    }
+
+    if(isSettingsOpen()){
+      const el = getSettingsContentEl();
+      fitOne(el);
+      return;
+    }
+
+    if(isMenuOpen()){
+      const el = getMenuContentEl();
+      fitOne(el);
+      return;
+    }
+  }
+
+  // Следим за открытиями/закрытиями через polling (стабильно и не требует лезть в чужой код)
+  let lastState = "";
+  setInterval(() => {
+    const state = (isMenuOpen() ? "menu" : "") + "|" + (isSettingsOpen() ? "settings" : "");
+    if(state !== lastState){
+      lastState = state;
+      // чуть задержим, чтобы анимации/рендер успели
+      setTimeout(fitNow, 60);
+      setTimeout(fitNow, 220);
+    }
+  }, 120);
+
+  // На поворот/resize тоже подгоняем
+  window.addEventListener("resize", () => {
+    setTimeout(fitNow, 50);
+    setTimeout(fitNow, 250);
+  }, {passive:true});
+
+  // Старт
+  setTimeout(fitNow, 200);
+})();
+</script>
+<!-- ===================== END PART 3.6/15 — MOBILE MENU FIT ===================== -->
