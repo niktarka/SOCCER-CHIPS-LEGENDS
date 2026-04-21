@@ -3415,3 +3415,139 @@
 })();
 </script>
 <!-- ===================== END PART 3.1/15 — FULLSCREEN BUTTON ===================== -->
+<!-- ===================== PART 3.2/15 — ZOOM BUTTONS (PC + MOBILE) ===================== -->
+<style id="SC_P32_ZOOM_STYLE">
+  /* Панель рядом с FULL */
+  #fsPanel31{
+    position: fixed;
+    right: 12px;
+    top: 12px;
+    z-index: 2147483647;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  /* Чтобы старый FULL не торчал отдельно, прячем его и используем в панели */
+  #fsBtn31{ position: static !important; right:auto !important; top:auto !important; }
+
+  .zBtn32{
+    border: none;
+    cursor: pointer;
+    padding: 10px 12px;
+    border-radius: 16px;
+    background: rgba(255,255,255,.78);
+    border: 1px solid rgba(21,19,26,.12);
+    box-shadow: 0 14px 36px rgba(21,19,26,.12);
+    backdrop-filter: blur(12px);
+    font-weight: 1200;
+    color: rgba(21,19,26,.86);
+    user-select: none;
+    min-width: 56px;
+    text-align: center;
+  }
+  .zBtn32:active{ transform: translateY(6px); }
+
+  /* Зум через CSS переменную */
+  :root{ --scZoom32: 1; }
+
+  /* Масштабируем сам canvas */
+  #gameCanvas{
+    transform: scale(var(--scZoom32));
+    transform-origin: center center;
+  }
+
+  /* В псевдо-фуллскрине (из Part 3.1) тоже зум работает */
+  body.pseudo-fs31 #gameCanvas{
+    transform: scale(var(--scZoom32)) !important;
+    transform-origin: center center !important;
+  }
+</style>
+
+<script id="SC_P32_ZOOM_SCRIPT">
+(() => {
+  const canvas = document.getElementById("gameCanvas");
+  const fsBtn = document.getElementById("fsBtn31"); // твоя кнопка из Part 3.1
+  if(!canvas || !fsBtn) return;
+
+  // 1) Создаём панель и переносим FULL внутрь
+  let panel = document.getElementById("fsPanel31");
+  if(!panel){
+    panel = document.createElement("div");
+    panel.id = "fsPanel31";
+    document.body.appendChild(panel);
+  }
+
+  // если кнопка FULL ещё не в панели — переносим
+  if(fsBtn.parentElement !== panel){
+    panel.appendChild(fsBtn);
+  }
+
+  // 2) Кнопки зума
+  function makeBtn(id, text){
+    let b = document.getElementById(id);
+    if(b) return b;
+    b = document.createElement("button");
+    b.id = id;
+    b.className = "zBtn32";
+    b.type = "button";
+    b.textContent = text;
+    panel.insertBefore(b, fsBtn); // слева от FULL
+    return b;
+  }
+
+  const btnMinus = makeBtn("zoomOut32", "−");
+  const btnReset = makeBtn("zoomReset32", "100%");
+  const btnPlus  = makeBtn("zoomIn32", "+");
+
+  // 3) Настройки зума
+  const LS_KEY = "sc_zoom_32";
+  const Z_MIN = 0.75;   // отдаление
+  const Z_MAX = 1.60;   // приближение
+  const Z_STEP = 0.10;  // шаг
+
+  function clamp(v){ return Math.max(Z_MIN, Math.min(Z_MAX, v)); }
+  function round1(v){ return Math.round(v*100)/100; }
+
+  function setZoom(z){
+    z = clamp(round1(z));
+    document.documentElement.style.setProperty("--scZoom32", String(z));
+    btnReset.textContent = Math.round(z*100) + "%";
+    try{ localStorage.setItem(LS_KEY, String(z)); }catch{}
+    // Дадим движку шанс подстроиться (если он слушает resize)
+    setTimeout(()=>window.dispatchEvent(new Event("resize")), 0);
+  }
+
+  function getZoom(){
+    const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--scZoom32")) || 1;
+    return v;
+  }
+
+  function loadZoom(){
+    try{
+      const s = localStorage.getItem(LS_KEY);
+      if(!s) return;
+      const z = parseFloat(s);
+      if(isFinite(z)) setZoom(z);
+    }catch{}
+  }
+
+  // 4) Управление
+  btnPlus.addEventListener("click",(e)=>{ e.preventDefault(); setZoom(getZoom()+Z_STEP); }, {passive:false});
+  btnMinus.addEventListener("click",(e)=>{ e.preventDefault(); setZoom(getZoom()-Z_STEP); }, {passive:false});
+  btnReset.addEventListener("click",(e)=>{ e.preventDefault(); setZoom(1); }, {passive:false});
+
+  // 5) Горячие клавиши на ПК (не мешают игре): Ctrl + / Ctrl - / Ctrl 0
+  window.addEventListener("keydown",(e)=>{
+    if(!e.ctrlKey) return;
+    if(e.code === "NumpadAdd" || e.key === "="){ e.preventDefault(); setZoom(getZoom()+Z_STEP); }
+    if(e.code === "NumpadSubtract" || e.key === "-"){ e.preventDefault(); setZoom(getZoom()-Z_STEP); }
+    if(e.code === "Digit0" || e.code === "Numpad0"){ e.preventDefault(); setZoom(1); }
+  }, true);
+
+  // 6) Старт
+  setZoom(1);
+  loadZoom();
+})();
+</script>
+<!-- ===================== END PART 3.2/15 — ZOOM BUTTONS ===================== -->
