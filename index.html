@@ -1695,3 +1695,1562 @@
 })();
 </script>
 <!-- ===================== END PART 1.6/15 ===================== -->
+<!-- ===================== PART 2/15 — NEW MENU + SETTINGS + CALM MUSIC + REAL SFX + AUTO ROUTE ===================== -->
+<style id="SC_P2_V2_STYLE">
+  /* overlay menu */
+  #scMenu2{
+    position:fixed; inset:0;
+    display:none;
+    z-index:90000;
+    overflow:hidden;
+    background:
+      radial-gradient(1200px 900px at 18% 20%, rgba(255,122,0,.30), transparent 62%),
+      radial-gradient(1200px 900px at 82% 24%, rgba(122,53,255,.28), transparent 64%),
+      radial-gradient(1400px 1000px at 55% 92%, rgba(255,45,160,.18), transparent 66%),
+      linear-gradient(135deg, #e9ffe9, #c9f3d0 55%, #b8ebc2);
+  }
+  #scMenu2.on{display:block}
+  #scMenu2::before{
+    content:"";
+    position:absolute; inset:0; pointer-events:none;
+    background: repeating-linear-gradient(135deg,
+      rgba(21,19,26,.05) 0px, rgba(21,19,26,.05) 1px,
+      transparent 1px, transparent 14px);
+    opacity:.18;
+    mix-blend-mode:multiply;
+  }
+
+  .m2Wrap{
+    position:relative;
+    height:100%;
+    display:grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap:46px;
+    padding:64px;
+  }
+  @media (max-width:980px){
+    .m2Wrap{ grid-template-columns:1fr; padding:18px; gap:14px; }
+  }
+
+  .m2Brand{display:flex;flex-direction:column;justify-content:center}
+  .m2Title{
+    margin:0;
+    font-size:86px;
+    line-height:.9;
+    font-weight:1300;
+    letter-spacing:2.6px;
+    text-transform:uppercase;
+    background:linear-gradient(90deg,#ff7a00,#ff2da0,#7a35ff);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 0 48px rgba(255,122,0,.18);
+  }
+  .m2Sub{
+    margin-top:10px;
+    font-size:26px;
+    font-weight:1100;
+    letter-spacing:3.6px;
+    color:rgba(21,19,26,.72);
+  }
+  .m2Tag{
+    margin-top:14px;
+    font-size:13px;
+    font-weight:1000;
+    letter-spacing:.6px;
+    color:rgba(21,19,26,.60);
+  }
+
+  .m2Btns{display:flex;flex-direction:column;justify-content:center;gap:12px}
+  .m2Btn{
+    text-align:left;
+    padding:16px 18px;
+    border-radius:22px;
+    background: rgba(255,255,255,.74);
+    border:1px solid rgba(21,19,26,.12);
+    color: rgba(21,19,26,.92);
+    font-weight:1200;
+    cursor:pointer;
+    box-shadow: 0 12px 0 rgba(21,19,26,.10), 0 26px 60px rgba(21,19,26,.14);
+    transition: transform .08s ease, filter .15s ease;
+    position:relative;
+    overflow:hidden;
+  }
+  .m2Btn::before{
+    content:"";
+    position:absolute; inset:-2px;
+    background:
+      radial-gradient(900px 260px at 18% 22%, rgba(255,122,0,.18), transparent 60%),
+      radial-gradient(900px 260px at 82% 28%, rgba(122,53,255,.16), transparent 60%),
+      radial-gradient(900px 320px at 55% 95%, rgba(255,45,160,.12), transparent 65%);
+    opacity:.95;
+    pointer-events:none;
+  }
+  .m2Btn > span{position:relative; display:block}
+  .m2Btn:hover{filter:brightness(1.03)}
+  .m2Btn:active{transform:translateY(10px); box-shadow:0 4px 0 rgba(21,19,26,.10), 0 18px 36px rgba(21,19,26,.12)}
+  .m2Btn.primary{
+    background: linear-gradient(90deg, rgba(255,122,0,.18), rgba(255,45,160,.14), rgba(122,53,255,.16));
+  }
+  .m2Btn.ghost{ background: rgba(255,255,255,.58); }
+
+  .m2Footer{
+    position:absolute; bottom:14px; left:50%;
+    transform:translateX(-50%);
+    font-size:12px;
+    opacity:.68;
+    color:rgba(21,19,26,.70);
+    text-align:center;
+    width:min(860px, calc(100% - 20px));
+  }
+
+  /* language pill */
+  #m2LangPill{
+    position:fixed;
+    left:12px; top:12px;
+    z-index: 90500;
+    display:none;
+    gap:8px; align-items:center;
+    padding:8px 10px;
+    border-radius:14px;
+    background: rgba(255,255,255,.74);
+    border:1px solid rgba(21,19,26,.12);
+    box-shadow: 0 14px 36px rgba(21,19,26,.12);
+    backdrop-filter: blur(12px);
+    user-select:none;
+  }
+  #scMenu2.on #m2LangPill{display:flex}
+  #m2LangBtn{
+    border:none; cursor:pointer;
+    padding:6px 10px;
+    border-radius:12px;
+    background: rgba(255,255,255,.68);
+    border:1px solid rgba(21,19,26,.12);
+    font-weight:1200;
+    color: rgba(21,19,26,.82);
+    display:flex; align-items:center; gap:8px;
+  }
+  #m2LangDrop{
+    position:absolute; left:0; top:44px;
+    width:220px;
+    display:none;
+    flex-direction:column;
+    gap:8px;
+    padding:10px;
+    border-radius:16px;
+    background: rgba(255,255,255,.88);
+    border:1px solid rgba(21,19,26,.12);
+    box-shadow: 0 24px 70px rgba(21,19,26,.18);
+    backdrop-filter: blur(14px);
+  }
+  #m2LangPill.open #m2LangDrop{display:flex}
+  .m2LangItem{
+    border:none; cursor:pointer;
+    padding:10px 10px;
+    border-radius:14px;
+    background: rgba(255,255,255,.80);
+    border:1px solid rgba(21,19,26,.10);
+    font-weight:1100;
+    color: rgba(21,19,26,.86);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .m2LangItem.active{ border-color: rgba(255,122,0,.26); background: rgba(255,122,0,.12); }
+
+  /* settings modal */
+  #m2Settings{
+    position:fixed; inset:0;
+    display:none;
+    place-items:center;
+    z-index: 91000;
+    background: rgba(21,19,26,.40);
+    backdrop-filter: blur(8px);
+    padding:18px;
+  }
+  #m2Settings.on{display:grid}
+  .m2Card{
+    width:min(880px, calc(100% - 24px));
+    border-radius:24px;
+    background: rgba(255,255,255,.86);
+    border:1px solid rgba(21,19,26,.12);
+    box-shadow: 0 30px 90px rgba(21,19,26,.18);
+    overflow:hidden;
+    color: rgba(21,19,26,.92);
+  }
+  .m2Hd{
+    padding:14px 14px 12px;
+    border-bottom:1px solid rgba(21,19,26,.10);
+    background: linear-gradient(to bottom, rgba(255,255,255,.58), transparent);
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+  }
+  .m2Hd h3{margin:0; font-size:16px; font-weight:1300}
+  .m2X{
+    border:none; cursor:pointer;
+    padding:6px 10px;
+    border-radius:12px;
+    background: rgba(255,255,255,.70);
+    border:1px solid rgba(21,19,26,.12);
+    font-weight:1200;
+    color: rgba(21,19,26,.72);
+  }
+  .m2Bd{padding:12px 14px 14px}
+  .m2Grid{display:grid; gap:10px}
+  .m2Row{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px;
+    padding:10px 12px;
+    border-radius:18px;
+    background: rgba(255,255,255,.76);
+    border:1px solid rgba(21,19,26,.10);
+  }
+  .m2Row label{font-weight:1100; font-size:13px; opacity:.9}
+  .m2Row input[type="range"]{width:280px}
+  .m2Row select{
+    padding:8px 10px;
+    border-radius:12px;
+    border:1px solid rgba(21,19,26,.12);
+    background: rgba(255,255,255,.72);
+    color: rgba(21,19,26,.92);
+    font-weight:1100;
+  }
+  .m2Danger{ margin-top:14px; padding-top:14px; border-top:1px solid rgba(21,19,26,.10); }
+  .m2Danger h4{ margin:0 0 8px; font-size:13px; font-weight:1300; }
+  .m2Act{
+    border:none; cursor:pointer;
+    padding:10px 12px;
+    border-radius:16px;
+    background: rgba(255,255,255,.72);
+    border:1px solid rgba(21,19,26,.12);
+    font-weight:1200;
+    color: rgba(21,19,26,.88);
+    box-shadow: 0 10px 0 rgba(21,19,26,.10);
+  }
+  .m2Act:active{ transform:translateY(8px); box-shadow:0 4px 0 rgba(21,19,26,.10) }
+  .m2Act.danger{ background: rgba(255,45,160,.14); border-color: rgba(255,45,160,.22) }
+  .m2Ft{ padding:0 14px 14px; display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
+  .m2Save{ background: rgba(60,255,143,.20); border-color: rgba(60,255,143,.28); }
+</style>
+
+<section id="scMenu2" aria-label="Main Menu">
+  <div id="m2LangPill">
+    <button id="m2LangBtn" type="button"><span id="m2LangLabel">Русский</span><span style="opacity:.6">▾</span></button>
+    <div id="m2LangDrop">
+      <button class="m2LangItem" data-lang="ru" type="button"><span>Русский</span><small>RU</small></button>
+      <button class="m2LangItem" data-lang="en" type="button"><span>English</span><small>EN</small></button>
+      <button class="m2LangItem" data-lang="uk" type="button"><span>Українська</span><small>UA</small></button>
+      <button class="m2LangItem" data-lang="es" type="button"><span>Español</span><small>ES</small></button>
+    </div>
+  </div>
+
+  <div class="m2Wrap">
+    <div class="m2Brand">
+      <h1 class="m2Title">SOCCER<br>CHIPS</h1>
+      <div class="m2Sub">LEGENDS</div>
+      <div class="m2Tag">QuickPlay Games</div>
+    </div>
+
+    <div class="m2Btns">
+      <button class="m2Btn primary" id="m2Continue" type="button"><span data-i18n="continue">Продолжить</span></button>
+      <button class="m2Btn" id="m2CareerPlayer" type="button"><span data-i18n="career_player">Карьера игрока</span></button>
+      <button class="m2Btn" id="m2CareerCoach" type="button"><span data-i18n="career_coach">Карьера тренера</span></button>
+      <button class="m2Btn" id="m2QuickMatch" type="button"><span data-i18n="quick_match">Обычный матч</span></button>
+      <button class="m2Btn ghost" id="m2Training" type="button"><span data-i18n="training">Тренировка</span></button>
+      <button class="m2Btn ghost" id="m2SettingsBtn" type="button"><span data-i18n="settings">Настройки</span></button>
+    </div>
+  </div>
+
+  <div class="m2Footer"><span data-i18n="footer_hint">Совет: язык меняется в левом верхнем углу.</span></div>
+</section>
+
+<div id="m2Settings">
+  <div class="m2Card">
+    <div class="m2Hd">
+      <h3 data-i18n="settings">Настройки</h3>
+      <button class="m2X" id="m2SettingsX" type="button">✕</button>
+    </div>
+
+    <div class="m2Bd">
+      <div class="m2Grid">
+        <div class="m2Row">
+          <label data-i18n="music">Музыка</label>
+          <input id="setMusic" type="range" min="0" max="100" value="45">
+        </div>
+        <div class="m2Row">
+          <label data-i18n="sfx">Эффекты</label>
+          <input id="setSfx" type="range" min="0" max="100" value="75">
+        </div>
+        <div class="m2Row">
+          <label data-i18n="ui">Интерфейс</label>
+          <input id="setUI" type="range" min="0" max="100" value="70">
+        </div>
+        <div class="m2Row">
+          <label data-i18n="language">Язык</label>
+          <select id="setLang">
+            <option value="ru">Русский</option>
+            <option value="en">English</option>
+            <option value="uk">Українська</option>
+            <option value="es">Español</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="m2Danger">
+        <h4 data-i18n="danger">Опасная зона</h4>
+        <button class="m2Act danger" id="m2Reset" type="button" data-i18n="reset">Сброс прогресса</button>
+        <div style="margin-top:8px; opacity:.72; font-size:12.5px" data-i18n="reset_desc">
+          Сбросит прогресс обучения и настройки.
+        </div>
+      </div>
+    </div>
+
+    <div class="m2Ft">
+      <button class="m2Act" id="m2Cancel" type="button" data-i18n="cancel">Отмена</button>
+      <button class="m2Act m2Save" id="m2Save" type="button" data-i18n="save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script id="SC_P2_V2_SCRIPT">
+(() => {
+  const $=(s,r=document)=>r.querySelector(s);
+
+  // ---- storage
+  const LS = {
+    tutorialDone: "sc_tutorial_done",
+    settings: "sc_settings_v2",
+    lang: "sc_lang_v2"
+  };
+
+  // ---- i18n
+  const I18N = {
+    ru:{
+      continue:"Продолжить", career_player:"Карьера игрока", career_coach:"Карьера тренера",
+      quick_match:"Обычный матч", training:"Тренировка", settings:"Настройки",
+      footer_hint:"Совет: язык меняется в левом верхнем углу.",
+      music:"Музыка", sfx:"Эффекты", ui:"Интерфейс", language:"Язык",
+      danger:"Опасная зона", reset:"Сброс прогресса", reset_desc:"Сбросит прогресс обучения и настройки.",
+      cancel:"Отмена", save:"Сохранить",
+      soon:"Скоро", saved:"Сохранено"
+    },
+    en:{
+      continue:"Continue", career_player:"Player Career", career_coach:"Coach Career",
+      quick_match:"Quick Match", training:"Training", settings:"Settings",
+      footer_hint:"Tip: change language in the top-left corner.",
+      music:"Music", sfx:"SFX", ui:"UI", language:"Language",
+      danger:"Danger Zone", reset:"Reset progress", reset_desc:"Resets tutorial progress and settings.",
+      cancel:"Cancel", save:"Save",
+      soon:"Soon", saved:"Saved"
+    },
+    uk:{
+      continue:"Продовжити", career_player:"Кар'єра гравця", career_coach:"Кар'єра тренера",
+      quick_match:"Звичайний матч", training:"Тренування", settings:"Налаштування",
+      footer_hint:"Порада: мову можна змінити у верхньому лівому куті.",
+      music:"Музика", sfx:"Ефекти", ui:"Інтерфейс", language:"Мова",
+      danger:"Небезпечна зона", reset:"Скинути прогрес", reset_desc:"Скидає прогрес навчання і налаштування.",
+      cancel:"Скасувати", save:"Зберегти",
+      soon:"Скоро", saved:"Збережено"
+    },
+    es:{
+      continue:"Continuar", career_player:"Carrera de jugador", career_coach:"Carrera de entrenador",
+      quick_match:"Partido rápido", training:"Entrenamiento", settings:"Ajustes",
+      footer_hint:"Consejo: cambia el idioma arriba a la izquierda.",
+      music:"Música", sfx:"Efectos", ui:"Interfaz", language:"Idioma",
+      danger:"Zona de peligro", reset:"Reiniciar progreso", reset_desc:"Reinicia el tutorial y los ajustes.",
+      cancel:"Cancelar", save:"Guardar",
+      soon:"Pronto", saved:"Guardado"
+    }
+  };
+  const LANGS=["ru","en","uk","es"];
+  const getLang=()=> LANGS.includes(localStorage.getItem(LS.lang)) ? localStorage.getItem(LS.lang) : "ru";
+  const setLang=(l)=>{ localStorage.setItem(LS.lang,l); applyLang(); };
+  const tr=()=> I18N[getLang()] || I18N.ru;
+
+  function applyLang(){
+    const t = tr();
+    document.querySelectorAll("[data-i18n]").forEach(el=>{
+      const k=el.getAttribute("data-i18n");
+      if(t[k]) el.textContent=t[k];
+    });
+    const sel=$("#setLang"); if(sel) sel.value=getLang();
+    const lab=$("#m2LangLabel");
+    if(lab){
+      const map={ru:"Русский",en:"English",uk:"Українська",es:"Español"};
+      lab.textContent=map[getLang()]||"Русский";
+    }
+    document.querySelectorAll(".m2LangItem").forEach(b=>b.classList.toggle("active", b.dataset.lang===getLang()));
+  }
+
+  // ---- toast (используем твой, если есть)
+  const toastFn = (typeof window.toast==="function") ? window.toast : (m)=>console.log("[toast]",m);
+
+  // ---- audio: спокойная музыка + sfx
+  // Используем actx/ensureAudio из Part 1 если есть, иначе создаём.
+  let actxRef = (typeof actx !== "undefined") ? actx : null;
+  function ensureA(){
+    if(typeof ensureAudio === "function"){ ensureAudio(); }
+    if(!actxRef){
+      try{ actxRef = new (window.AudioContext||window.webkitAudioContext)(); }catch{}
+    }
+    return actxRef;
+  }
+
+  // gains
+  let masterG=null, musicG=null, sfxG=null;
+  let musicNodes=null;
+  function ensureMixer(){
+    const A = ensureA();
+    if(!A || masterG) return;
+    masterG = A.createGain();
+    musicG  = A.createGain();
+    sfxG    = A.createGain();
+    musicG.connect(masterG);
+    sfxG.connect(masterG);
+    masterG.connect(A.destination);
+  }
+
+  // settings
+  const defSet = { music:45, sfx:75, ui:70, lang:getLang() };
+  function loadS(){ try{ return JSON.parse(localStorage.getItem(LS.settings)||"null"); }catch{ return null; } }
+  function saveS(o){ try{ localStorage.setItem(LS.settings, JSON.stringify(o)); }catch{} }
+
+  function applyVolumes(){
+    ensureMixer();
+    const A=actxRef; if(!A || !musicG || !sfxG) return;
+    const st=loadS()||defSet;
+    const mv=(st.music??45)/100;
+    const sv=(st.sfx??75)/100;
+    // спокойная музыка тише
+    musicG.gain.setTargetAtTime(mv*0.35, A.currentTime, 0.08);
+    sfxG.gain.setTargetAtTime(sv*0.90, A.currentTime, 0.06);
+  }
+
+  // Calm music (приятная, не тревожная): мягкие аккорды + лёгкий пульс
+  function startMusic(){
+    ensureMixer();
+    const A=actxRef;
+    if(!A || musicNodes) return;
+
+    // chord tones: C major-ish (но мягко)
+    const base=220; // A3
+    const freqs=[
+      [base*0.75, base, base*1.25],   // D-ish
+      [base*0.67, base*0.89, base*1.19], // C-ish
+      [base*0.80, base*1.07, base*1.34], // E-ish
+      [base*0.71, base*0.95, base*1.27], // D-ish
+    ];
+    let idx=0;
+
+    const o1=A.createOscillator(); o1.type="sine";
+    const o2=A.createOscillator(); o2.type="triangle";
+    const o3=A.createOscillator(); o3.type="sine";
+
+    const g1=A.createGain(); const g2=A.createGain(); const g3=A.createGain();
+    g1.gain.value=0.12; g2.gain.value=0.07; g3.gain.value=0.06;
+
+    o1.connect(g1); o2.connect(g2); o3.connect(g3);
+    g1.connect(musicG); g2.connect(musicG); g3.connect(musicG);
+
+    // subtle pulse
+    const lfo=A.createOscillator(); lfo.type="sine"; lfo.frequency.value=0.12;
+    const lfoG=A.createGain(); lfoG.gain.value=0.10;
+    lfo.connect(lfoG); lfoG.connect(musicG.gain);
+
+    const t=A.currentTime;
+    o1.start(t); o2.start(t); o3.start(t); lfo.start(t);
+
+    const step=()=>{
+      if(!musicNodes) return;
+      const tt=A.currentTime;
+      const c=freqs[idx%freqs.length];
+      o1.frequency.setTargetAtTime(c[0], tt, 0.12);
+      o2.frequency.setTargetAtTime(c[1], tt, 0.12);
+      o3.frequency.setTargetAtTime(c[2], tt, 0.12);
+      idx++;
+      setTimeout(step, 1800);
+    };
+    musicNodes={o1,o2,o3,lfo,g1,g2,g3};
+    step();
+  }
+
+  function stopMusic(){
+    if(!musicNodes) return;
+    try{
+      musicNodes.o1.stop(); musicNodes.o2.stop(); musicNodes.o3.stop(); musicNodes.lfo.stop();
+    }catch{}
+    musicNodes=null;
+  }
+
+  // SFX (единый)
+  function playSfx(freq=700, dur=0.06, gain=0.08, type="triangle"){
+    ensureMixer();
+    const A=actxRef; if(!A) return;
+    const t=A.currentTime;
+    const o=A.createOscillator();
+    const g=A.createGain();
+    o.type=type;
+    o.frequency.setValueAtTime(freq,t);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(gain, t+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    o.connect(g); g.connect(sfxG);
+    o.start(t); o.stop(t+dur+0.02);
+  }
+  const uiClick=()=>playSfx(520+Math.random()*90,0.06,0.08,"triangle");
+  const sfxBallTouch=()=>playSfx(430+Math.random()*70,0.05,0.08,"sine");
+  const sfxWall=()=>playSfx(260+Math.random()*70,0.06,0.10,"sine");
+  const sfxPost=()=>{ playSfx(920,0.05,0.12,"triangle"); playSfx(520,0.08,0.08,"triangle"); };
+  const sfxGoal=()=>{ playSfx(980,0.12,0.12,"triangle"); playSfx(640,0.16,0.10,"triangle"); };
+  const sfxKick=()=>playSfx(190+Math.random()*60,0.08,0.12,"sine");
+
+  // --- SOUND HOOKS (реальные): kick/dribble/walls/goal/post
+  // Важно: обращаемся напрямую по имени, а не window.updateBall, потому что в Part 1 это не window-свойство.
+  try{
+    // kick hook
+    if(typeof kick === "function" && !kick.__m2wrapped){
+      const oldKick = kick;
+      kick = function(strength){
+        const ok = oldKick(strength);
+        if(ok) sfxKick();
+        return ok;
+      };
+      kick.__m2wrapped = true;
+    }
+  }catch{}
+
+  try{
+    // dribble touch hook
+    if(typeof dribble === "function" && !dribble.__m2wrapped){
+      let last=0;
+      const oldDr = dribble;
+      dribble = function(dt, mv){
+        const res = oldDr(dt, mv);
+        const now = performance.now();
+        // если ведём и рядом мяч — лёгкий “тик”
+        if(mv && mv.moving && typeof closeToBall==="function" && closeToBall() && now-last>130){
+          last=now;
+          sfxBallTouch();
+        }
+        return res;
+      };
+      dribble.__m2wrapped = true;
+    }
+  }catch{}
+
+  try{
+    // updateBall wall/goal/post
+    if(typeof updateBall === "function" && !updateBall.__m2wrapped){
+      const oldUp = updateBall;
+      updateBall = function(dt){
+        const bx = ball?.x, by = ball?.y;
+        const bvx = ball?.vx, bvy = ball?.vy;
+
+        const res = oldUp(dt);
+
+        if(ball){
+          // wall bounce (sign flip)
+          if(bvx!=null && ball.vx!=null && Math.sign(bvx)!==Math.sign(ball.vx) && Math.abs(bvx)>40) sfxWall();
+          if(bvy!=null && ball.vy!=null && Math.sign(bvy)!==Math.sign(ball.vy) && Math.abs(bvy)>40) sfxWall();
+
+          // post (around goal mouth ends)
+          if(typeof goalR!=="undefined" && goalR && ball){
+            const postR = 14;
+            const px = goalR.x;
+            const py1 = goalR.y;
+            const py2 = goalR.y + goalR.h;
+            const d1 = Math.hypot(ball.x - px, ball.y - py1);
+            const d2 = Math.hypot(ball.x - px, ball.y - py2);
+            if(d1 < postR + ball.r || d2 < postR + ball.r) sfxPost();
+          }
+
+          // goal (debounced)
+          if(typeof pitch!=="undefined" && typeof goalR!=="undefined" && pitch && goalR){
+            const inGoal = (ball.x >= pitch.x + pitch.w &&
+                            ball.y > goalR.y &&
+                            ball.y < goalR.y + goalR.h);
+            const now=performance.now();
+            if(inGoal && (!window.__m2LastGoal || now-window.__m2LastGoal>1200)){
+              window.__m2LastGoal = now;
+              sfxGoal();
+            }
+          }
+        }
+        return res;
+      };
+      updateBall.__m2wrapped = true;
+    }
+  }catch{}
+
+  // ---- UI elements
+  const menu=$("#scMenu2");
+  const settings=$("#m2Settings");
+
+  function hideTrainingUI(){
+    const coach=document.querySelector(".coach"); if(coach) coach.style.display="none";
+    const hints=document.getElementById("hints"); if(hints) hints.style.display="none";
+    const stamina=document.querySelector(".stamina"); if(stamina) stamina.style.display="none";
+    const topPill=document.querySelector(".topPill"); if(topPill) topPill.style.display="none";
+    const touchUI=document.getElementById("touchUI"); if(touchUI) touchUI.style.display="none";
+    // power HUD stays off unless using kicks
+    const p=document.getElementById("powerHud"); if(p) p.style.display="none";
+  }
+  function showTrainingUI(){
+    const coach=document.querySelector(".coach"); if(coach) coach.style.display="";
+    const hints=document.getElementById("hints"); if(hints) hints.style.display="";
+    const stamina=document.querySelector(".stamina"); if(stamina) stamina.style.display="";
+    const topPill=document.querySelector(".topPill"); if(topPill) topPill.style.display="";
+    const touchUI=document.getElementById("touchUI"); if(touchUI) touchUI.style.display="";
+    const p=document.getElementById("powerHud"); if(p) p.style.display="";
+  }
+
+  function openMenu(){
+    menu.classList.add("on");
+    ensureA();
+    applyVolumes();
+    startMusic();
+  }
+  function closeMenu(){
+    menu.classList.remove("on");
+  }
+
+  // language pill
+  const langPill=$("#m2LangPill");
+  $("#m2LangBtn").addEventListener("click", ()=>langPill.classList.toggle("open"));
+  document.addEventListener("click",(e)=>{ if(menu.classList.contains("on") && !langPill.contains(e.target)) langPill.classList.remove("open"); });
+  document.querySelectorAll(".m2LangItem").forEach(b=>{
+    b.addEventListener("click", ()=>{ setLang(b.dataset.lang); langPill.classList.remove("open"); uiClick(); });
+  });
+
+  // settings modal
+  function openSettings(){
+    settings.classList.add("on");
+    uiClick();
+    const st=loadS()||defSet;
+    $("#setMusic").value=st.music??45;
+    $("#setSfx").value=st.sfx??75;
+    $("#setUI").value=st.ui??70;
+    $("#setLang").value=getLang();
+  }
+  function closeSettings(){ settings.classList.remove("on"); }
+
+  $("#m2SettingsBtn").addEventListener("click", ()=>openSettings());
+  $("#m2SettingsX").addEventListener("click", ()=>{ uiClick(); closeSettings(); });
+  $("#m2Cancel").addEventListener("click", ()=>{ uiClick(); closeSettings(); });
+  settings.addEventListener("click",(e)=>{ if(e.target===settings) closeSettings(); });
+
+  $("#m2Save").addEventListener("click", ()=>{
+    uiClick();
+    const st={
+      music:+$("#setMusic").value,
+      sfx:+$("#setSfx").value,
+      ui:+$("#setUI").value,
+      lang:$("#setLang").value
+    };
+    saveS(st);
+    localStorage.setItem(LS.lang, st.lang);
+    applyLang();
+    applyVolumes();
+    toastFn(tr().saved);
+    closeSettings();
+  });
+
+  $("#setMusic").addEventListener("input", applyVolumes);
+  $("#setSfx").addEventListener("input", applyVolumes);
+  $("#setLang").addEventListener("change", ()=>{ setLang($("#setLang").value); });
+
+  // reset progress
+  $("#m2Reset").addEventListener("click", ()=>{
+    uiClick();
+    const ok = confirm("Точно сбросить всё? Обучение снова появится.");
+    if(!ok) return;
+    try{
+      localStorage.removeItem(LS.tutorialDone);
+      localStorage.removeItem(LS.settings);
+      // язык оставим? можно оставить — но ты хотела проверить поведение, поэтому оставим язык
+    }catch{}
+    stopMusic();
+    closeSettings();
+    closeMenu();
+    showTrainingUI();
+
+    // сбросить обучение корректно
+    try{
+      if(typeof tutorial==="object"){
+        tutorial.running = true;
+        tutorial.done = false;
+        tutorial.step = 1;
+      }
+      if(typeof resetPositions==="function") resetPositions();
+      if(typeof setStepUI==="function") setStepUI();
+    }catch{}
+  });
+
+  // buttons
+  const soon=()=>toastFn(tr().soon);
+  $("#m2Continue").addEventListener("click", ()=>{ uiClick(); soon(); });
+  $("#m2CareerPlayer").addEventListener("click", ()=>{ uiClick(); soon(); });
+  $("#m2CareerCoach").addEventListener("click", ()=>{ uiClick(); soon(); });
+  $("#m2QuickMatch").addEventListener("click", ()=>{ uiClick(); soon(); });
+
+  $("#m2Training").addEventListener("click", ()=>{
+    uiClick();
+    stopMusic();
+    closeMenu();
+    showTrainingUI();
+    try{
+      if(typeof tutorial==="object"){
+        tutorial.running=true; tutorial.done=false; tutorial.step=1;
+      }
+      if(typeof resetPositions==="function") resetPositions();
+      if(typeof setStepUI==="function") setStepUI();
+    }catch{}
+  });
+
+  // ---- AUTO ROUTE: после скипа/завершения СРАЗУ в меню
+  function markDoneAndMenu(){
+    try{ localStorage.setItem(LS.tutorialDone,"1"); }catch{}
+    hideTrainingUI();
+    openMenu();
+  }
+
+  // Отслеживаем завершение (tutorial.done=true)
+  let lastDone=false;
+  setInterval(()=>{
+    try{
+      if(typeof tutorial==="object"){
+        const done=!!tutorial.done;
+        if(done && !lastDone){
+          lastDone=true;
+          markDoneAndMenu();
+        }
+      }
+    }catch{}
+  }, 120);
+
+  // Отслеживаем пропуск — кнопка Skip
+  const skipBtn=document.getElementById("btnSkip");
+  if(skipBtn){
+    skipBtn.addEventListener("click", ()=>{
+      setTimeout(()=>{
+        try{
+          if(typeof tutorial==="object" && tutorial.done){
+            markDoneAndMenu();
+          }
+        }catch{}
+      }, 30);
+    });
+  }
+
+  // initial route
+  function route(){
+    applyLang();
+    // apply settings volumes
+    const st=loadS();
+    if(st){ applyVolumes(); }
+    const done = localStorage.getItem(LS.tutorialDone)==="1";
+    if(done){
+      hideTrainingUI();
+      openMenu();
+    } else {
+      // training stays
+      showTrainingUI();
+      // menu music off
+      stopMusic();
+      closeMenu();
+    }
+  }
+
+  // wait a bit for loader -> game
+  setTimeout(route, 1300);
+
+  // ESC toggles menu only after done (so training not interrupted)
+  window.addEventListener("keydown",(e)=>{
+    if(e.code!=="Escape") return;
+    const done = localStorage.getItem(LS.tutorialDone)==="1";
+    if(!done) return;
+    e.preventDefault();
+    if(menu.classList.contains("on")){
+      uiClick();
+      stopMusic();
+      closeMenu();
+    }else{
+      uiClick();
+      openMenu();
+    }
+  }, true);
+
+})();
+</script>
+<!-- ===================== END PART 2/15 ===================== -->
+<!-- ===================== PART 3/15 — TRAINING HUB REWORK v2 (GOALIE DIFF + POSTS + BOTS SPREAD + TACKLE) ===================== -->
+<style id="SC_TRAIN3_V2_STYLE">
+  #scTrainHub3{
+    position:fixed; inset:0;
+    display:none;
+    z-index:93000;
+    background: rgba(21,19,26,.45);
+    backdrop-filter: blur(10px);
+  }
+  #scTrainHub3.on{display:block}
+
+  .th3Wrap{position:absolute; inset:0; display:grid; place-items:center; padding:16px;}
+  .th3Card{
+    width:min(980px, calc(100% - 10px));
+    max-height: calc(100vh - 28px);
+    border-radius:26px;
+    background: rgba(255,255,255,.88);
+    border:1px solid rgba(21,19,26,.12);
+    box-shadow: 0 30px 90px rgba(21,19,26,.18);
+    overflow:hidden;
+    color: rgba(21,19,26,.92);
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", sans-serif;
+  }
+  .th3Hd{
+    padding:14px 14px 12px;
+    border-bottom:1px solid rgba(21,19,26,.10);
+    background: linear-gradient(to bottom, rgba(255,255,255,.65), transparent);
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+  }
+  .th3Hd h3{margin:0; font-size:16px; font-weight:1300;}
+  .th3X{
+    border:none; cursor:pointer;
+    padding:6px 10px; border-radius:12px;
+    background: rgba(255,255,255,.70);
+    border:1px solid rgba(21,19,26,.12);
+    font-weight:1200;
+    color: rgba(21,19,26,.72);
+  }
+
+  .th3Bd{
+    padding:12px 14px 14px;
+    display:grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap:12px;
+    overflow:auto;
+  }
+  @media (max-width:980px){ .th3Bd{grid-template-columns:1fr;} }
+
+  .th3Panel{
+    border-radius:18px;
+    background: rgba(255,255,255,.76);
+    border:1px solid rgba(21,19,26,.10);
+    padding:12px;
+  }
+  .th3Panel h4{margin:0; font-size:13px; font-weight:1200;}
+  .th3Panel p{margin:8px 0 0; font-size:12.5px; opacity:.75; line-height:1.35;}
+
+  .th3List{margin-top:10px; display:flex; flex-direction:column; gap:10px;}
+  .th3Mode{
+    width:100%;
+    text-align:left;
+    padding:12px 12px;
+    border-radius:18px;
+    background: rgba(255,255,255,.82);
+    border:1px solid rgba(21,19,26,.10);
+    cursor:pointer;
+    font-weight:1200;
+    color: rgba(21,19,26,.92);
+    box-shadow: 0 10px 0 rgba(21,19,26,.10);
+  }
+  .th3Mode:active{transform:translateY(8px); box-shadow:0 4px 0 rgba(21,19,26,.10);}
+  .th3Mode small{display:block; margin-top:6px; font-weight:1000; opacity:.75}
+  .th3Mode.active{
+    border-color: rgba(255,122,0,.30);
+    background: rgba(255,122,0,.12);
+  }
+
+  .th3Row{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    padding:10px 12px;
+    border-radius:16px;
+    background: rgba(255,255,255,.78);
+    border:1px solid rgba(21,19,26,.10);
+    margin-top:10px;
+  }
+  .th3Row label{font-weight:1100; font-size:12.5px; opacity:.9;}
+  .th3Row select{
+    padding:8px 10px;
+    border-radius:12px;
+    border:1px solid rgba(21,19,26,.12);
+    background: rgba(255,255,255,.78);
+    font-weight:1100;
+  }
+
+  .th3Ft{
+    padding:12px 14px 14px;
+    border-top:1px solid rgba(21,19,26,.10);
+    display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;
+  }
+  .th3Mini{font-size:12px; opacity:.78;}
+  .th3Act{
+    border:none; cursor:pointer;
+    padding:10px 12px;
+    border-radius:16px;
+    background: rgba(60,255,143,.22);
+    border:1px solid rgba(60,255,143,.30);
+    font-weight:1200;
+    color: rgba(21,19,26,.90);
+    box-shadow: 0 10px 0 rgba(21,19,26,.10);
+  }
+  .th3Act:active{transform:translateY(8px); box-shadow:0 4px 0 rgba(21,19,26,.10);}
+
+  /* In-game Training HUD */
+  #trainHUD3{
+    position:fixed;
+    left:12px; top:74px;
+    z-index:94000;
+    display:none;
+    gap:10px;
+    align-items:center;
+    padding:10px 10px;
+    border-radius:16px;
+    background: rgba(255,255,255,.78);
+    border:1px solid rgba(21,19,26,.12);
+    box-shadow: 0 14px 36px rgba(21,19,26,.12);
+    backdrop-filter: blur(12px);
+  }
+  #trainHUD3.on{display:flex}
+  .hudBtn{
+    border:none; cursor:pointer;
+    padding:8px 10px;
+    border-radius:14px;
+    background: rgba(255,255,255,.75);
+    border:1px solid rgba(21,19,26,.12);
+    font-weight:1200;
+    color: rgba(21,19,26,.86);
+  }
+  .hudBtn:active{transform:translateY(6px)}
+  .hudTag{font-weight:1200; opacity:.78; font-size:12px}
+
+  /* Mobile TACKLE button (center of the diamond) */
+  body.mobile-on #btnTTackle{
+    position:absolute !important;
+    left: 102px !important;
+    top: 102px !important;
+    width: 86px !important;
+    height: 86px !important;
+    border-radius: 50% !important;
+    display:grid !important;
+    place-items:center !important;
+    font-weight: 1200 !important;
+    background: rgba(21,19,26,.10) !important;
+    border: 1px solid rgba(21,19,26,.18) !important;
+    color: rgba(21,19,26,.85) !important;
+    box-shadow: 0 10px 0 rgba(21,19,26,.10) !important;
+  }
+  body.mobile-on #btnTTackle:active{ transform:translateY(8px) !important; box-shadow:0 4px 0 rgba(21,19,26,.10) !important; }
+</style>
+
+<section id="scTrainHub3" aria-label="Training Hub">
+  <div class="th3Wrap">
+    <div class="th3Card">
+      <div class="th3Hd">
+        <h3>Тренировка</h3>
+        <button class="th3X" id="th3Close" type="button">✕</button>
+      </div>
+
+      <div class="th3Bd">
+        <div class="th3Panel">
+          <h4>Режимы</h4>
+          <p>Свободная тренировка после обучения (без тренера и подсказок).</p>
+          <div class="th3List" id="th3Modes"></div>
+        </div>
+
+        <div class="th3Panel">
+          <h4>Параметры</h4>
+          <p>Настрой режим перед запуском.</p>
+
+          <div class="th3Row">
+            <label>Вратарь</label>
+            <select id="th3Goalie">
+              <option value="on" selected>Вкл</option>
+              <option value="off">Выкл</option>
+            </select>
+          </div>
+
+          <div class="th3Row">
+            <label>Боты прессинга</label>
+            <select id="th3Bots">
+              <option value="0" selected>0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+            </select>
+          </div>
+
+          <div class="th3Row">
+            <label>Сложность</label>
+            <select id="th3Diff">
+              <option value="easy" selected>Лёгкая</option>
+              <option value="mid">Средняя</option>
+              <option value="hard">Сложная</option>
+            </select>
+          </div>
+
+          <div class="th3Row">
+            <label>Старт мяча</label>
+            <select id="th3Ball">
+              <option value="center" selected>Центр</option>
+              <option value="penalty">Пенальти</option>
+              <option value="freekick">Штрафной</option>
+              <option value="random">Случайно</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="th3Ft">
+        <div class="th3Mini" id="th3Info">Выбери режим и нажми «Запустить».</div>
+        <button class="th3Act" id="th3Start" type="button">Запустить</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="trainHUD3">
+  <span class="hudTag" id="hudMode3">TRAIN</span>
+  <button class="hudBtn" id="hudResetBall3" type="button">Ball</button>
+  <button class="hudBtn" id="hudResetPlayer3" type="button">Player</button>
+  <button class="hudBtn" id="hudExit3" type="button">Exit</button>
+</div>
+
+<script id="SC_P3_TRAIN_V2_SCRIPT">
+(() => {
+  const $=(s,r=document)=>r.querySelector(s);
+  const toastFn = (typeof window.toast==="function") ? window.toast : (m)=>console.log("[toast]",m);
+
+  // Проверка core Part 1
+  function hasCore(){
+    try{
+      return !!(pitch && player && ball && camera && goalR && typeof updateCamera==="function" && typeof updateBall==="function");
+    }catch{ return false; }
+  }
+  if(!hasCore()){
+    toastFn("Part 3: не найден core из Part 1 (pitch/player/ball/updateBall).");
+    return;
+  }
+
+  // UI
+  const hub = $("#scTrainHub3");
+  const hud = $("#trainHUD3");
+  const modesBox = $("#th3Modes");
+  const closeBtn = $("#th3Close");
+  const startBtn = $("#th3Start");
+  const info = $("#th3Info");
+
+  const selGoalie = $("#th3Goalie");
+  const selBots = $("#th3Bots");
+  const selDiff = $("#th3Diff");
+  const selBall = $("#th3Ball");
+
+  const hudMode = $("#hudMode3");
+  const btnResetBall = $("#hudResetBall3");
+  const btnResetPlayer = $("#hudResetPlayer3");
+  const btnExit = $("#hudExit3");
+
+  // Training state
+  const T = {
+    active:false,
+    mode:"free",
+    goalieOn:true,
+    bots:0,
+    diff:"easy",
+    ballPos:"center",
+    botsArr:[],
+    goalie:null,
+    goalieBrain:null,
+    tack:{ cd:0, dash:0 }
+  };
+
+  const MODES = [
+    { id:"free", title:"Свободная тренировка", desc:"Пустое поле: дриблинг, пасы, удары." },
+    { id:"penalty", title:"Пенальти", desc:"Мяч на точке. Бей по воротам." },
+    { id:"freekick", title:"Штрафной", desc:"Мяч перед штрафной. Отрабатывай удары." },
+    { id:"keeper", title:"Вратарь", desc:"Вратарь активен. Тренируй точность." },
+    { id:"pressure", title:"Прессинг", desc:"Боты пытаются отобрать и выбить мяч." },
+    { id:"dribble", title:"Дриблинг курс", desc:"Метки на поле для контроля." },
+    { id:"steal", title:"Отбор у нападающего", desc:"Бот ведёт мяч → отними без жести." }
+  ];
+
+  // ---------- show/hide UI (в трене: НЕТ тренера и подсказок, НО ЕСТЬ stamina/power)
+  function hideTutorialUI(){
+    const coach=document.querySelector(".coach"); if(coach) coach.style.display="none";
+    const hints=document.getElementById("hints"); if(hints) hints.style.display="none";
+    const top=document.querySelector(".topPill"); if(top) top.style.display="none";
+  }
+  function showCoreHud(){
+    const stamina=document.querySelector(".stamina"); if(stamina) stamina.style.display="";
+    const power=document.getElementById("powerHud"); if(power) power.style.display="";
+    const touchUI=document.getElementById("touchUI"); if(touchUI) touchUI.style.display="";
+  }
+
+  function stopTutorial(){
+    try{ tutorial.running=false; }catch{}
+  }
+
+  // ---------- helpers
+  function resetBall(where){
+    if(where==="center"){
+      ball.x = pitch.x + pitch.w*0.35;
+      ball.y = pitch.y + pitch.h*0.50;
+    } else if(where==="penalty"){
+      ball.x = pitch.x + pitch.w - 220;
+      ball.y = pitch.y + pitch.h*0.50;
+    } else if(where==="freekick"){
+      ball.x = pitch.x + pitch.w - 420;
+      ball.y = pitch.y + pitch.h*0.50 - 80;
+    } else if(where==="random"){
+      ball.x = pitch.x + 200 + Math.random()*(pitch.w-400);
+      ball.y = pitch.y + 160 + Math.random()*(pitch.h-320);
+    }
+    ball.vx=0; ball.vy=0;
+  }
+  function resetPlayerNearBall(){
+    player.x = ball.x - 120;
+    player.y = ball.y;
+  }
+
+  // ---------- POSTS / CROSSBAR physics + drawing
+  const POST = { r: 14 }; // hit radius
+  function collideCircle(cx,cy,cr){
+    const dx = ball.x - cx;
+    const dy = ball.y - cy;
+    const d = Math.hypot(dx,dy) || 1;
+    const min = ball.r + cr;
+    if(d < min){
+      // push out
+      const nx = dx/d, ny = dy/d;
+      ball.x = cx + nx*min;
+      ball.y = cy + ny*min;
+      // bounce reflect (simple)
+      const vn = ball.vx*nx + ball.vy*ny;
+      ball.vx = ball.vx - 2*vn*nx;
+      ball.vy = ball.vy - 2*vn*ny;
+      ball.vx *= 0.78;
+      ball.vy *= 0.78;
+      // sound (if Part 2 added)
+      try{ if(typeof sfxPost==="function") sfxPost(); }catch{}
+      return true;
+    }
+    return false;
+  }
+  function collideCrossbar(){
+    // horizontal segment at y=goalR.y and y=goalR.y+goalR.h? (we use top bar only visually)
+    // We'll simulate top crossbar at y=goalR.y
+    const y = goalR.y;
+    const x1 = goalR.x - 2;
+    const x2 = goalR.x + 2; // very small thickness, but we treat as line only when ball is near x=goal line
+    // only if ball near goal line
+    if(ball.x > pitch.x + pitch.w - 40){
+      const dy = ball.y - y;
+      if(Math.abs(dy) < ball.r + 4){
+        // bounce vertical
+        ball.y = y + Math.sign(dy)*(ball.r+4);
+        ball.vy *= -0.78;
+        try{ if(typeof sfxPost==="function") sfxPost(); }catch{}
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // ---------- BOTS
+  function makeBot(i){
+    return {
+      x: pitch.x + pitch.w*0.25 + i*60,
+      y: pitch.y + pitch.h*(0.40 + i*0.12),
+      r: 20,
+      speed: 220,
+      angle: (Math.PI*2/Math.max(1,T.bots)) * i, // different angle around ball
+      clearCd: 0
+    };
+  }
+  function botSpeed(diff){
+    return diff==="easy" ? 205 : diff==="mid" ? 250 : 300;
+  }
+
+  function updateBots(dt){
+    const desiredRadius = 90;
+
+    for(let i=0;i<T.botsArr.length;i++){
+      const b = T.botsArr[i];
+      b.speed = botSpeed(T.diff);
+
+      // target point around ball (spread)
+      const tx = ball.x + Math.cos(b.angle)*desiredRadius;
+      const ty = ball.y + Math.sin(b.angle)*desiredRadius;
+
+      let dx = tx - b.x;
+      let dy = ty - b.y;
+
+      // separation (avoid clumping)
+      let sx=0, sy=0;
+      for(let j=0;j<T.botsArr.length;j++){
+        if(i===j) continue;
+        const o=T.botsArr[j];
+        const rx = b.x - o.x;
+        const ry = b.y - o.y;
+        const d = Math.hypot(rx,ry);
+        if(d>0 && d< b.r*2.2){
+          sx += rx/(d*d);
+          sy += ry/(d*d);
+        }
+      }
+
+      // combine
+      dx += sx*140;
+      dy += sy*140;
+
+      const d = Math.hypot(dx,dy) || 1;
+      const nx = dx/d, ny=dy/d;
+
+      b.x += nx*b.speed*dt;
+      b.y += ny*b.speed*dt;
+
+      // clamp pitch
+      b.x = Math.max(pitch.x+b.r, Math.min(pitch.x+pitch.w-b.r, b.x));
+      b.y = Math.max(pitch.y+b.r, Math.min(pitch.y+pitch.h-b.r, b.y));
+
+      // steal/poke
+      const dist = Math.hypot(ball.x-b.x, ball.y-b.y);
+      if(dist < b.r + ball.r + 8){
+        // after steal: clear to your half (left)
+        const clearPower = (T.diff==="easy") ? 220 : (T.diff==="mid") ? 320 : 420;
+        // push ball to left + random vertical
+        ball.vx = -clearPower;
+        ball.vy = (Math.random()*2-1) * 160;
+        b.clearCd = 0.6; // cooldown before next clear attempt
+      }
+
+      // rotate angles slowly so they come from different sides
+      b.angle += dt * 0.45;
+    }
+  }
+
+  // ---------- GOALIE (difficulty tuned, not unbeatable)
+  function goalieParams(diff){
+    if(diff==="easy") return { speed:150, react:0.22, noise:48, saveR:10, whiff:0.35 };
+    if(diff==="mid")  return { speed:220, react:0.14, noise:26, saveR:8,  whiff:0.18 };
+    return               { speed:300, react:0.08, noise:12, saveR:7,  whiff:0.08 };
+  }
+  function makeGoalie(){
+    return { x: pitch.x + pitch.w - 70, y: pitch.y + pitch.h/2, r:24 };
+  }
+  function initGoalieBrain(){
+    const p = goalieParams(T.diff);
+    T.goalieBrain = {
+      nextUpdate: 0,
+      targetY: pitch.y + pitch.h/2,
+      p
+    };
+  }
+  function updateGoalie(dt){
+    if(!T.goalie) return;
+    if(!T.goalieBrain) initGoalieBrain();
+
+    const g=T.goalie;
+    const brain=T.goalieBrain;
+    const p=brain.p;
+
+    brain.nextUpdate -= dt;
+    if(brain.nextUpdate <= 0){
+      brain.nextUpdate = p.react;
+      // predict a little: aim toward ball y plus small noise
+      const noise = (Math.random()*2-1) * p.noise;
+      brain.targetY = ball.y + noise;
+    }
+
+    // only actively track when ball is heading to goal area, else slow drift to center
+    const nearGoalLine = ball.x > pitch.x + pitch.w - 420;
+    const goingToGoal = ball.vx > 60;
+    const desiredY = (nearGoalLine && goingToGoal) ? brain.targetY : (pitch.y + pitch.h/2);
+
+    const dy = desiredY - g.y;
+    const step = p.speed*dt;
+    g.y += Math.max(-step, Math.min(step, dy));
+
+    // clamp inside mouth
+    const top = goalR.y + 18;
+    const bot = goalR.y + goalR.h - 18;
+    g.y = Math.max(top, Math.min(bot, g.y));
+
+    // save check: not always, depends on whiff chance
+    const dist = Math.hypot(ball.x-g.x, ball.y-g.y);
+    const saveRadius = g.r + ball.r + p.saveR;
+
+    // IMPORTANT: can only save if ball is close & in front
+    if(nearGoalLine && goingToGoal && dist < saveRadius){
+      // whiff chance
+      if(Math.random() < p.whiff) return;
+
+      // push ball outward to prevent goal
+      ball.vx += -260;
+      ball.vy += (ball.y-g.y)*3.0;
+    }
+  }
+
+  // ---------- TACKLE (подкат)
+  // ПК: E (KeyE). Работает на всех раскладках.
+  function tryTackle(){
+    if(!T.active) return;
+    // cooldown
+    if(T.tack.cd > 0) return;
+    T.tack.cd = 0.65;
+    T.tack.dash = 0.18;
+
+    // stamina cost (если есть ST)
+    try{
+      if(typeof ST==="object"){
+        ST.value = Math.max(0, ST.value - 0.16);
+      }
+    }catch{}
+
+    // attempt steal if close enough
+    const d = Math.hypot(ball.x-player.x, ball.y-player.y);
+    if(d < player.r + ball.r + 28){
+      // nudge ball forward along aimDir
+      const a = (typeof aimDir==="function") ? aimDir() : {x:1,y:0};
+      ball.vx += a.x*220;
+      ball.vy += a.y*220;
+    }
+
+    // vibro/sfx
+    try{ if(navigator.vibrate) navigator.vibrate(12); }catch{}
+    try{ if(typeof sfxWall==="function") sfxWall(); }catch{}
+  }
+
+  // keybind E
+  window.addEventListener("keydown",(e)=>{
+    if(e.code==="KeyE") tryTackle();
+  }, true);
+
+  // mobile button injection (center)
+  function ensureMobileTackleButton(){
+    const isTouch = matchMedia("(pointer: coarse)").matches || ("ontouchstart" in window);
+    if(!isTouch) return;
+    const wrap = document.querySelector(".touchBtns");
+    if(!wrap) return;
+    if(document.getElementById("btnTTackle")) return;
+    const b=document.createElement("button");
+    b.className="tbtn";
+    b.id="btnTTackle";
+    b.type="button";
+    b.textContent="TACKLE";
+    wrap.appendChild(b);
+    b.addEventListener("click",(e)=>{ e.preventDefault(); tryTackle(); });
+  }
+
+  // ---------- Drawing overlay (bots/goalie/course + posts)
+  let drawWrapped=false;
+  function wrapDraw(){
+    if(drawWrapped) return;
+    drawWrapped=true;
+    if(typeof drawWorld !== "function") return;
+
+    const old = drawWorld;
+    window.drawWorld = function(){
+      old();
+
+      if(!T.active) return;
+
+      ctx.save();
+      ctx.translate(-camera.x, -camera.y);
+
+      // posts + crossbar visuals
+      ctx.fillStyle="rgba(255,255,255,.78)";
+      ctx.beginPath(); ctx.arc(goalR.x, goalR.y, POST.r, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(goalR.x, goalR.y+goalR.h, POST.r, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle="rgba(255,255,255,.72)";
+      ctx.lineWidth=6;
+      ctx.beginPath();
+      ctx.moveTo(goalR.x-2, goalR.y);
+      ctx.lineTo(goalR.x-2, goalR.y+goalR.h);
+      ctx.stroke();
+
+      // bots
+      ctx.fillStyle="rgba(21,19,26,.22)";
+      for(const b of T.botsArr){
+        ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
+      }
+
+      // goalie
+      if(T.goalie){
+        ctx.fillStyle="rgba(21,19,26,.24)";
+        ctx.beginPath(); ctx.arc(T.goalie.x,T.goalie.y,T.goalie.r,0,Math.PI*2); ctx.fill();
+      }
+
+      // dribble course markers
+      if(T.mode==="dribble"){
+        ctx.strokeStyle="rgba(255,255,255,.75)";
+        ctx.lineWidth=4;
+        for(let i=0;i<5;i++){
+          const x=pitch.x + 420 + i*240;
+          const y=pitch.y + 260 + (i%2?200:-60);
+          ctx.beginPath(); ctx.arc(x,y,18,0,Math.PI*2); ctx.stroke();
+        }
+      }
+
+      ctx.restore();
+    };
+  }
+
+  // ---------- Wrap updateBall: AI + post collisions
+  let upWrapped=false;
+  function wrapUpdateBall(){
+    if(upWrapped) return;
+    upWrapped=true;
+
+    const old = updateBall;
+    window.updateBall = function(dt){
+      const res = old(dt);
+
+      if(T.active){
+        // post collisions (2 posts) + crossbar
+        collideCircle(goalR.x, goalR.y, POST.r);
+        collideCircle(goalR.x, goalR.y+goalR.h, POST.r);
+        collideCrossbar();
+
+        // AI
+        if(T.botsArr.length) updateBots(dt);
+        if(T.goalie) updateGoalie(dt);
+
+        // tackle dash (small speed boost forward)
+        if(T.tack.dash > 0){
+          T.tack.dash -= dt;
+          const a = (typeof aimDir==="function") ? aimDir() : {x:1,y:0};
+          player.x += a.x * 420 * dt;
+          player.y += a.y * 420 * dt;
+          // clamp
+          player.x = Math.max(pitch.x+player.r, Math.min(pitch.x+pitch.w-player.r, player.x));
+          player.y = Math.max(pitch.y+player.r, Math.min(pitch.y+pitch.h-player.r, player.y));
+        }
+        if(T.tack.cd > 0) T.tack.cd -= dt;
+      }
+
+      return res;
+    };
+  }
+
+  // ---------- Hub rendering
+  function renderModes(){
+    modesBox.innerHTML="";
+    MODES.forEach(m=>{
+      const b=document.createElement("button");
+      b.type="button";
+      b.className="th3Mode" + (T.mode===m.id ? " active":"");
+      b.innerHTML = `${m.title}<small>${m.desc}</small>`;
+      b.onclick=()=>{
+        T.mode=m.id;
+        renderModes();
+        info.textContent = `Выбран режим: ${m.title}`;
+      };
+      modesBox.appendChild(b);
+    });
+  }
+  renderModes();
+
+  // ---------- Start training
+  function enterTraining(){
+    T.goalieOn = (selGoalie.value==="on");
+    T.bots = +selBots.value;
+    T.diff = selDiff.value;
+    T.ballPos = selBall.value;
+
+    // mode-based overrides
+    if(T.mode==="keeper" || T.mode==="penalty" || T.mode==="freekick") T.goalieOn = true;
+
+    stopTutorial();
+    hideTutorialUI();
+    showCoreHud();
+
+    // close menu if open
+    const menu=document.getElementById("scMenu2");
+    if(menu) menu.classList.remove("on");
+
+    // start
+    T.active=true;
+    hud.classList.add("on");
+
+    // ball placement
+    if(T.mode==="penalty") resetBall("penalty");
+    else if(T.mode==="freekick") resetBall("freekick");
+    else if(T.mode==="keeper") resetBall("random");
+    else if(T.mode==="dribble") resetBall("center");
+    else resetBall(T.ballPos);
+
+    resetPlayerNearBall();
+
+    // bots
+    T.botsArr=[];
+    for(let i=0;i<T.bots;i++){
+      const bot=makeBot(i);
+      bot.angle = (Math.PI*2/Math.max(1,T.bots))*i;
+      T.botsArr.push(bot);
+    }
+
+    // goalie
+    T.goalie=null;
+    T.goalieBrain=null;
+    if(T.goalieOn) {
+      T.goalie = makeGoalie();
+      initGoalieBrain();
+    }
+
+    // attacker drill
+    if(T.mode==="steal"){
+      // make 1 attacker bot with ball
+      T.botsArr = [ makeBot(0) ];
+      resetBall("random");
+      // place attacker on ball
+      T.botsArr[0].x = ball.x + 40;
+      T.botsArr[0].y = ball.y;
+    }
+
+    // tack state reset
+    T.tack.cd=0; T.tack.dash=0;
+
+    // wrappers
+    wrapDraw();
+    wrapUpdateBall();
+    ensureMobileTackleButton();
+
+    hudMode.textContent = (MODES.find(x=>x.id===T.mode)?.title || "Тренировка").toUpperCase();
+
+    hub.classList.remove("on");
+    toastFn("Тренировка запущена ✅  (Подкат: E / TACKLE)");
+  }
+
+  // HUD actions
+  btnResetBall.onclick = ()=>resetBall(T.mode==="penalty"?"penalty":T.mode==="freekick"?"freekick":T.ballPos);
+  btnResetPlayer.onclick = ()=>resetPlayerNearBall();
+  btnExit.onclick = ()=>{
+    T.active=false;
+    T.botsArr=[];
+    T.goalie=null;
+    T.goalieBrain=null;
+    hud.classList.remove("on");
+    // back to menu
+    const menu=document.getElementById("scMenu2");
+    if(menu) menu.classList.add("on");
+  };
+
+  startBtn.onclick = enterTraining;
+  closeBtn.onclick = ()=>hub.classList.remove("on");
+  hub.addEventListener("click",(e)=>{ if(e.target===hub) hub.classList.remove("on"); });
+
+  // ---------- Hook menu Training button: open HUB, NOT tutorial
+  function hookTrainingButton(){
+    const btn=document.getElementById("m2Training");
+    if(!btn) return;
+
+    const clone = btn.cloneNode(true);
+    btn.parentNode.replaceChild(clone, btn);
+
+    clone.addEventListener("click",(e)=>{
+      e.preventDefault();
+      hub.classList.add("on");
+      renderModes();
+      info.textContent="Выбери режим и нажми «Запустить».";
+    }, true);
+  }
+  hookTrainingButton();
+
+})();
+</script>
+<!-- ===================== END PART 3/15 — TRAINING HUB REWORK v2 ===================== -->
